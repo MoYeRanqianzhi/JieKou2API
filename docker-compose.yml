@@ -1,0 +1,13 @@
+services:
+  jk2api:
+    build: .
+    container_name: jk2api
+    restart: unless-stopped
+    ports:
+      - "28667:8080"
+    volumes:
+      - ./config.yaml:/app/config.yaml
+      - ./auths:/app/auths
+      - ./token.key:/app/token.key
+    environment:
+      - TZ=Asia/Shanghai
