@@ -5,27 +5,150 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>JK2API — Get API Key</title>
 <style>
-:root{--bg:#fff;--surface:#fafafa;--border:#e5e5e5;--text:#111;--text2:#555;--text3:#999;--brand:#111;--ok:#2a7;--err:#c33;--radius:10px;--font:system-ui,-apple-system,'Segoe UI',sans-serif;--mono:'SF Mono',Consolas,monospace}
-@media(prefers-color-scheme:dark){:root{--bg:#111;--surface:#1a1a1a;--border:#2a2a2a;--text:#eee;--text2:#aaa;--text3:#666;--brand:#eee}}
+:root{
+  --bg:#fff;--surface:#fafafa;--surface2:#fff;
+  --border:#e5e5e5;--border2:#ddd;
+  --text:#111;--text2:#555;--text3:#999;--text4:#bbb;
+  --brand:#111;--brand2:#333;
+  --ok:#2a7;--err:#b53333;
+  --ring:#ddd;--ring2:#ccc;
+  --radius:12px;--radius-sm:8px;
+  --serif:Georgia,'Times New Roman',serif;
+  --sans:system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:'SF Mono',Consolas,monospace;
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#111;--surface:#1a1a1a;--surface2:#222;
+  --border:#2a2a2a;--border2:#333;
+  --text:#eee;--text2:#aaa;--text3:#666;--text4:#444;
+  --brand:#eee;--brand2:#ccc;
+  --ring:#333;--ring2:#444;
+}}
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:15px;line-height:1.6;min-height:100vh;display:flex;align-items:center;justify-content:center}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:16px;line-height:1.6;min-height:100vh;display:flex;align-items:center;justify-content:center}
 ::selection{background:#c96442;color:#fff}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:44px 36px;max-width:420px;width:90%;text-align:center}
-h1{font-size:26px;font-weight:700;margin-bottom:4px}
-.sub{color:var(--text3);font-size:14px;margin-bottom:32px}
-.btn{display:inline-flex;align-items:center;gap:8px;background:var(--brand);color:var(--bg);border:none;padding:12px 28px;cursor:pointer;font-size:15px;font-weight:600;border-radius:var(--radius);transition:opacity .15s;font-family:var(--font)}
-.btn:hover{opacity:.85}.btn:active{transform:scale(.98)}
+
+.card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:48px 40px;
+  max-width:440px;
+  width:90%;
+  text-align:center;
+  box-shadow:rgba(0,0,0,0.05) 0px 4px 24px;
+}
+h1{
+  font-family:var(--serif);
+  font-size:32px;
+  font-weight:500;
+  line-height:1.2;
+  margin-bottom:4px;
+  letter-spacing:-0.3px;
+}
+.sub{
+  color:var(--text3);
+  font-size:14px;
+  margin-bottom:28px;
+  line-height:1.5;
+}
+.desc{
+  color:var(--text3);
+  font-size:13px;
+  margin-bottom:28px;
+  line-height:1.7;
+  text-align:left;
+  background:var(--bg);
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  padding:16px;
+}
+.desc strong{color:var(--text2)}
+
+.btn{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  background:var(--brand);
+  color:var(--bg);
+  border:none;
+  padding:12px 28px;
+  cursor:pointer;
+  font-size:15px;
+  font-weight:500;
+  border-radius:var(--radius);
+  transition:opacity .15s;
+  font-family:var(--sans);
+  box-shadow:var(--brand) 0px 0px 0px 0px, var(--brand) 0px 0px 0px 1px;
+}
+.btn:hover{opacity:.88}
+.btn:active{transform:scale(.98)}
 .btn svg{width:18px;height:18px;fill:currentColor}
-.result{display:none;margin-top:24px;text-align:left}
-.lbl{color:var(--text3);font-size:11px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px;font-weight:600}
-.key-box{background:var(--bg);border:1px solid var(--border);padding:12px;font-family:var(--mono);font-size:13px;word-break:break-all;border-radius:8px;cursor:pointer;transition:border .15s;margin-bottom:14px;position:relative}
-.key-box:hover{border-color:var(--text3)}
-.key-box .hint{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--text3);font-family:var(--font);text-transform:uppercase;letter-spacing:.3px}
-.key-box.ok{border-color:var(--ok)}.key-box.ok .hint{color:var(--ok)}
-.usage{color:var(--text2);font-size:13px;line-height:1.7;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px}
-.usage code{font-family:var(--mono);font-size:12px;background:var(--surface);padding:1px 5px;border-radius:3px}
-.email{color:var(--text3);font-size:13px;margin-top:10px;text-align:center}
-.spin{display:none;margin:24px auto;width:22px;height:22px;border:2.5px solid var(--border);border-top-color:var(--text);border-radius:50%;animation:sp .7s linear infinite}
+
+.result{display:none;margin-top:28px;text-align:left}
+.lbl{
+  color:var(--text3);
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:.5px;
+  margin-bottom:6px;
+  font-weight:500;
+}
+.key-box{
+  background:var(--bg);
+  border:1px solid var(--border2);
+  padding:14px 16px;
+  font-family:var(--mono);
+  font-size:13px;
+  word-break:break-all;
+  border-radius:var(--radius-sm);
+  cursor:pointer;
+  transition:all .15s;
+  margin-bottom:16px;
+  position:relative;
+  box-shadow:var(--bg) 0px 0px 0px 0px, var(--ring) 0px 0px 0px 1px;
+}
+.key-box:hover{box-shadow:var(--bg) 0px 0px 0px 0px, var(--ring2) 0px 0px 0px 1px}
+.key-box .hint{
+  position:absolute;
+  right:12px;top:50%;transform:translateY(-50%);
+  font-size:10px;
+  color:var(--text4);
+  font-family:var(--sans);
+  text-transform:uppercase;
+  letter-spacing:.3px;
+}
+.key-box.ok{box-shadow:var(--bg) 0px 0px 0px 0px, var(--ok) 0px 0px 0px 1px}
+.key-box.ok .hint{color:var(--ok)}
+
+.usage{
+  color:var(--text2);
+  font-size:13px;
+  line-height:1.7;
+  background:var(--bg);
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  padding:14px 16px;
+}
+.usage code{
+  font-family:var(--mono);
+  font-size:12px;
+  background:var(--surface2);
+  padding:2px 6px;
+  border-radius:4px;
+  border:1px solid var(--border);
+}
+.email{color:var(--text3);font-size:13px;margin-top:12px;text-align:center}
+
+.spin{
+  display:none;
+  margin:28px auto;
+  width:22px;height:22px;
+  border:2.5px solid var(--border2);
+  border-top-color:var(--text);
+  border-radius:50%;
+  animation:sp .7s linear infinite;
+}
 @keyframes sp{to{transform:rotate(360deg)}}
 .status{color:var(--text3);font-size:13px;margin-top:8px;display:none}
 .error{color:var(--err);font-size:13px;margin-top:12px;display:none}
@@ -34,26 +157,25 @@ h1{font-size:26px;font-weight:700;margin-bottom:4px}
 <body>
 <div class="card">
 <h1>JK2API</h1>
-<p class="sub">GitHub 众筹计划 — 贡献登录态，获取 API Key</p>
-<p style="color:var(--text3);font-size:12px;margin-bottom:24px;line-height:1.6">
-使用 GitHub 账号登录 JieKou，您的登录态将加入共享池。<br>
-作为回报，您将获得一个专属 API Key。<br>
-<strong style="color:var(--text2)">建议使用小号登录</strong>，避免影响主账号。
-</p>
+<p class="sub">GitHub 众筹计划</p>
+<div class="desc">
+  登录 JieKou，贡献登录态至共享池，获取专属 API Key。<br>
+  <strong>建议使用小号</strong>，避免影响主账号。
+</div>
 <button class="btn" id="login-btn" onclick="start()">
 <svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
-GitHub 登录参与众筹
+GitHub 登录
 </button>
 <div class="spin" id="spin"></div>
-<div class="status" id="status">Waiting for authorization...</div>
+<div class="status" id="status">等待授权中...</div>
 <div class="error" id="error"></div>
 <div class="result" id="result">
-<div class="lbl">Your API Key</div>
-<div class="key-box" id="api-key" onclick="copy()"><span class="hint">click to copy</span></div>
-<div class="lbl">Usage</div>
+<div class="lbl">您的 API Key</div>
+<div class="key-box" id="api-key" onclick="copy()"><span class="hint">点击复制</span></div>
+<div class="lbl">使用方式</div>
 <div class="usage">
-Set <code>ANTHROPIC_BASE_URL</code> to this server<br>
-Set <code>ANTHROPIC_API_KEY</code> to the key above
+<code>ANTHROPIC_BASE_URL</code> → 本服务地址<br>
+<code>ANTHROPIC_API_KEY</code> → 上方 Key
 </div>
 <div class="email" id="email"></div>
 </div>
@@ -86,9 +208,9 @@ document.getElementById('login-btn').style.display='inline-flex';
 const e=document.getElementById('error');e.textContent=m;e.style.display='block';}
 function copy(){
 const kb=document.getElementById('api-key');
-const t=kb.textContent.replace('click to copy','').trim();
-navigator.clipboard.writeText(t).then(()=>{kb.classList.add('ok');kb.querySelector('.hint').textContent='copied!';
-setTimeout(()=>{kb.classList.remove('ok');kb.querySelector('.hint').textContent='click to copy';},2000);});}
+const t=kb.textContent.replace('点击复制','').trim();
+navigator.clipboard.writeText(t).then(()=>{kb.classList.add('ok');kb.querySelector('.hint').textContent='已复制!';
+setTimeout(()=>{kb.classList.remove('ok');kb.querySelector('.hint').textContent='点击复制';},2000);});}
 </script>
 </body>
 </html>

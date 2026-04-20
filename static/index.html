@@ -6,129 +6,281 @@
 <title>JK2API Admin</title>
 <style>
 :root{
-  --bg:#fff;--surface:#fafafa;--border:#e5e5e5;--border-l:#f0f0f0;
-  --text:#111;--text2:#555;--text3:#999;
-  --brand:#111;--brand-h:#333;--accent:#c96442;
-  --err:#c33;--ok:#2a7;
-  --radius:10px;--radius-sm:7px;
-  --shadow:0 1px 3px rgba(0,0,0,0.06);
-  --font:system-ui,-apple-system,'Segoe UI',sans-serif;
+  --bg:#fff;--surface:#fafafa;--surface2:#fff;
+  --border:#e5e5e5;--border2:#ddd;
+  --text:#111;--text2:#555;--text3:#999;--text4:#bbb;
+  --brand:#111;--brand2:#333;
+  --ok:#2a7;--err:#b53333;
+  --ring:#ddd;--ring2:#ccc;--ring3:#bbb;
+  --radius:12px;--radius-sm:8px;
+  --shadow-whisper:rgba(0,0,0,0.05) 0px 4px 24px;
+  --serif:Georgia,'Times New Roman',serif;
+  --sans:system-ui,-apple-system,'Segoe UI',sans-serif;
   --mono:'SF Mono',Consolas,'Courier New',monospace;
 }
 @media(prefers-color-scheme:dark){:root{
-  --bg:#111;--surface:#1a1a1a;--border:#2a2a2a;--border-l:#222;
-  --text:#eee;--text2:#aaa;--text3:#666;
-  --brand:#eee;--brand-h:#ccc;
-  --shadow:0 1px 3px rgba(0,0,0,0.3);
+  --bg:#111;--surface:#1a1a1a;--surface2:#222;
+  --border:#2a2a2a;--border2:#333;
+  --text:#eee;--text2:#aaa;--text3:#666;--text4:#444;
+  --brand:#eee;--brand2:#ccc;
+  --ring:#333;--ring2:#444;
+  --shadow-whisper:rgba(0,0,0,0.3) 0px 4px 24px;
 }}
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:15px;line-height:1.6;min-height:100vh}
-::selection{background:var(--accent);color:#fff}
-a{color:var(--accent);text-decoration:none}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.6;min-height:100vh}
+::selection{background:#c96442;color:#fff}
+a{color:var(--brand);text-decoration:none}
+a:hover{color:var(--brand2)}
 
-.container{max-width:960px;margin:0 auto;padding:28px 20px}
-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;padding-bottom:16px;border-bottom:1px solid var(--border)}
-header h1{font-size:22px;font-weight:700;letter-spacing:-0.3px}
-header h1 span{color:var(--text3);font-weight:400;font-size:13px;margin-left:8px}
-.hdr-right{display:flex;gap:6px;align-items:center}
+.container{max-width:960px;margin:0 auto;padding:32px 24px}
+
+/* Header */
+header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:32px;padding-bottom:18px;
+  border-bottom:1px solid var(--border2);
+}
+header h1{
+  font-family:var(--serif);
+  font-size:25px;font-weight:500;
+  line-height:1.2;letter-spacing:-0.3px;
+}
+header h1 span{
+  color:var(--text3);font-family:var(--sans);
+  font-weight:400;font-size:13px;margin-left:8px;
+}
+.hdr-right{display:flex;gap:8px;align-items:center}
 
 /* Buttons */
-.btn{display:inline-flex;align-items:center;gap:5px;background:var(--surface);color:var(--text);border:1px solid var(--border);padding:7px 14px;cursor:pointer;font-size:13px;font-weight:500;border-radius:var(--radius-sm);transition:all .12s;font-family:var(--font)}
-.btn:hover{border-color:var(--text3)}
-.btn:active{transform:scale(.98)}
-.btn-primary{background:var(--brand);color:var(--bg);border-color:var(--brand)}
-.btn-primary:hover{background:var(--brand-h);border-color:var(--brand-h)}
-.btn-sm{padding:4px 10px;font-size:12px}
-.btn-danger{color:var(--err);border-color:rgba(204,51,51,.3)}
-.btn-danger:hover{border-color:var(--err);background:rgba(204,51,51,.06)}
-.btn-ghost{background:transparent;border-color:transparent;color:var(--text3);padding:5px 8px}
+.btn{
+  display:inline-flex;align-items:center;gap:6px;
+  background:var(--surface2);color:var(--text);
+  border:none;padding:8px 16px;cursor:pointer;
+  font-size:13px;font-weight:500;
+  border-radius:var(--radius-sm);
+  transition:all .15s;font-family:var(--sans);
+  box-shadow:var(--surface2) 0px 0px 0px 0px, var(--ring) 0px 0px 0px 1px;
+}
+.btn:hover{box-shadow:var(--surface2) 0px 0px 0px 0px, var(--ring2) 0px 0px 0px 1px}
+.btn:active{transform:scale(.98);box-shadow:inset 0px 0px 0px 1px rgba(0,0,0,0.15)}
+.btn-primary{
+  background:var(--brand);color:var(--bg);
+  box-shadow:var(--brand) 0px 0px 0px 0px, var(--brand) 0px 0px 0px 1px;
+}
+.btn-primary:hover{opacity:.88;box-shadow:var(--brand) 0px 0px 0px 0px, var(--brand) 0px 0px 0px 1px}
+.btn-sm{padding:5px 12px;font-size:12px}
+.btn-danger{
+  color:var(--err);
+  box-shadow:var(--surface2) 0px 0px 0px 0px, rgba(181,51,51,0.3) 0px 0px 0px 1px;
+}
+.btn-danger:hover{box-shadow:var(--surface2) 0px 0px 0px 0px, var(--err) 0px 0px 0px 1px}
+.btn-ghost{
+  background:transparent;color:var(--text3);padding:6px 10px;
+  box-shadow:none;
+}
 .btn-ghost:hover{color:var(--text);background:var(--surface)}
+.btn-sand{
+  background:var(--surface);color:var(--text2);
+  box-shadow:var(--surface) 0px 0px 0px 0px, var(--ring) 0px 0px 0px 1px;
+}
+.btn-sand:hover{box-shadow:var(--surface) 0px 0px 0px 0px, var(--ring2) 0px 0px 0px 1px}
 
 /* Tabs */
-.tabs{display:flex;gap:2px;margin-bottom:24px;border-bottom:1px solid var(--border)}
-.tab{padding:8px 16px;cursor:pointer;color:var(--text3);font-size:14px;font-weight:500;border-bottom:2px solid transparent;transition:color .15s}
+.tabs{
+  display:flex;gap:0;margin-bottom:28px;
+  border-bottom:1px solid var(--border2);
+}
+.tab{
+  padding:10px 20px;cursor:pointer;
+  color:var(--text3);font-size:14px;font-weight:500;
+  border-bottom:2px solid transparent;
+  transition:color .15s;
+}
 .tab:hover{color:var(--text2)}
-.tab.active{color:var(--text);border-bottom-color:var(--text)}
+.tab.active{color:var(--text);border-bottom-color:var(--brand)}
 .panel{display:none}.panel.active{display:block}
 
 /* Stats */
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
-.stat{background:var(--surface);border:1px solid var(--border-l);border-radius:var(--radius);padding:16px;text-align:center}
-.stat-val{font-size:32px;font-weight:700;line-height:1.1}
-.stat-lbl{font-size:11px;color:var(--text3);margin-top:4px;text-transform:uppercase;letter-spacing:.5px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px}
+.stat{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:20px;text-align:center;
+  box-shadow:var(--shadow-whisper);
+}
+.stat-val{
+  font-family:var(--serif);
+  font-size:36px;font-weight:500;
+  line-height:1.1;color:var(--text);
+}
+.stat-lbl{
+  font-size:11px;color:var(--text3);
+  margin-top:6px;text-transform:uppercase;
+  letter-spacing:.5px;font-weight:500;
+}
 .stat.green .stat-val{color:var(--ok)}
 .stat.red .stat-val{color:var(--err)}
 
 /* Cards */
-.card{background:var(--surface);border:1px solid var(--border-l);border-radius:var(--radius);padding:20px;margin-bottom:16px}
-.card-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
-.card-title{font-size:15px;font-weight:600}
-.card-actions{display:flex;gap:6px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:24px;margin-bottom:18px;
+  box-shadow:var(--shadow-whisper);
+}
+.card-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.card-title{
+  font-family:var(--serif);
+  font-size:17px;font-weight:500;
+  line-height:1.2;
+}
+.card-actions{display:flex;gap:8px}
 
 /* Table */
 table{width:100%;border-collapse:collapse;font-size:13px}
-th{text-align:left;padding:8px 10px;color:var(--text3);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--border)}
-td{padding:8px 10px;border-bottom:1px solid var(--border-l)}
+th{
+  text-align:left;padding:10px 12px;
+  color:var(--text3);font-weight:500;
+  font-size:11px;text-transform:uppercase;
+  letter-spacing:.5px;
+  border-bottom:1px solid var(--border2);
+}
+td{padding:10px 12px;border-bottom:1px solid var(--border)}
 tr:last-child td{border-bottom:none}
-tr:hover td{background:rgba(128,128,128,.03)}
-.mono{font-family:var(--mono);font-size:12px;color:var(--text2)}
+tr:hover td{background:rgba(0,0,0,0.02)}
+.mono{font-family:var(--mono);font-size:12px;color:var(--text2);letter-spacing:-0.3px}
 .dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px}
 .dot.ok{background:var(--ok)}.dot.bad{background:var(--err)}
 
 /* Inputs */
 input[type=text],input[type=password],input[type=number],select{
-  width:100%;background:var(--bg);color:var(--text);border:1px solid var(--border);
-  padding:8px 12px;font-size:14px;border-radius:var(--radius-sm);font-family:var(--font);transition:border .15s}
-input:focus,select:focus{outline:none;border-color:var(--text)}
-textarea{width:100%;background:var(--bg);color:var(--text);border:1px solid var(--border);padding:12px;font-family:var(--mono);font-size:13px;line-height:1.6;min-height:300px;resize:vertical;border-radius:var(--radius-sm)}
-textarea:focus{outline:none;border-color:var(--text)}
-label{display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.3px}
+  width:100%;background:var(--bg);color:var(--text);
+  border:1px solid var(--border2);
+  padding:9px 14px;font-size:14px;
+  border-radius:var(--radius);
+  font-family:var(--sans);transition:border .15s;
+}
+input:focus,select:focus{outline:none;border-color:#3898ec}
+textarea{
+  width:100%;background:var(--bg);color:var(--text);
+  border:1px solid var(--border2);
+  padding:14px;font-family:var(--mono);
+  font-size:13px;line-height:1.6;
+  min-height:300px;resize:vertical;
+  border-radius:var(--radius);
+  letter-spacing:-0.3px;
+}
+textarea:focus{outline:none;border-color:#3898ec}
+label{
+  display:block;font-size:12px;font-weight:500;
+  color:var(--text3);margin-bottom:6px;
+  text-transform:uppercase;letter-spacing:.4px;
+}
 
 /* Config grid */
-.cfg-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.cfg-sec{background:var(--bg);border:1px solid var(--border-l);border-radius:var(--radius-sm);padding:16px}
-.cfg-sec h3{font-size:14px;font-weight:600;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--border-l)}
-.cfg-field{margin-bottom:12px}.cfg-field:last-child{margin-bottom:0}
-.cfg-tabs{display:inline-flex;gap:0;margin-bottom:14px;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden}
-.cfg-tab{padding:6px 14px;font-size:12px;cursor:pointer;color:var(--text3);font-weight:600;transition:all .15s;border-right:1px solid var(--border)}
+.cfg-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.cfg-sec{
+  background:var(--bg);
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  padding:20px;
+}
+.cfg-sec h3{
+  font-family:var(--serif);
+  font-size:15px;font-weight:500;
+  margin-bottom:14px;padding-bottom:8px;
+  border-bottom:1px solid var(--border);
+}
+.cfg-field{margin-bottom:14px}.cfg-field:last-child{margin-bottom:0}
+.cfg-tabs{
+  display:inline-flex;gap:0;margin-bottom:16px;
+  border:1px solid var(--border2);
+  border-radius:var(--radius-sm);overflow:hidden;
+}
+.cfg-tab{
+  padding:7px 16px;font-size:12px;cursor:pointer;
+  color:var(--text3);font-weight:500;
+  transition:all .15s;
+  border-right:1px solid var(--border2);
+}
 .cfg-tab:last-child{border-right:none}
 .cfg-tab.active{background:var(--text);color:var(--bg)}
 
-/* Tags */
-.tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px}
-.tag{display:inline-flex;align-items:center;gap:3px;background:var(--bg);border:1px solid var(--border);color:var(--text2);padding:3px 8px;border-radius:20px;font-size:12px;font-family:var(--mono)}
-.tag .x{cursor:pointer;color:var(--text3);font-size:14px;margin-left:2px;line-height:1}
-.tag .x:hover{color:var(--err)}
-
 /* API Keys section */
-.apikey-item{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-l)}
+.apikey-item{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 0;
+  border-bottom:1px solid var(--border);
+}
 .apikey-item:last-child{border-bottom:none}
-.apikey-val{font-family:var(--mono);font-size:12px;color:var(--text2);word-break:break-all;flex:1;margin-right:10px}
+.apikey-val{
+  font-family:var(--mono);font-size:12px;
+  color:var(--text2);word-break:break-all;
+  flex:1;margin-right:12px;letter-spacing:-0.3px;
+}
 
 /* Login card */
-.login-wrap{display:flex;align-items:center;justify-content:center;min-height:60vh}
-.login-card{background:var(--surface);border:1px solid var(--border-l);border-radius:var(--radius);padding:36px;max-width:360px;width:100%;text-align:center}
-.login-card h2{font-size:24px;font-weight:700;margin-bottom:4px}
-.login-card p{color:var(--text3);font-size:13px;margin-bottom:20px}
-.login-card .row{display:flex;gap:6px}
+.login-wrap{display:flex;align-items:center;justify-content:center;min-height:80vh}
+.login-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:44px 40px;
+  max-width:380px;width:92%;
+  text-align:center;
+  box-shadow:var(--shadow-whisper);
+}
+.login-card h2{
+  font-family:var(--serif);
+  font-size:28px;font-weight:500;
+  margin-bottom:4px;line-height:1.2;
+}
+.login-card p{color:var(--text3);font-size:13px;margin-bottom:24px;line-height:1.6}
+.login-card .row{display:flex;gap:8px}
 
 /* Modal */
-.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;align-items:center;justify-content:center}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100;align-items:center;justify-content:center}
 .overlay.show{display:flex}
-.modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;max-width:420px;width:92%;box-shadow:0 12px 36px rgba(0,0,0,.12)}
-.modal h3{font-size:16px;font-weight:600;margin-bottom:16px}
-.modal .field{margin-bottom:12px}
-.modal .btns{display:flex;gap:6px;justify-content:flex-end;margin-top:16px}
+.modal{
+  background:var(--surface);
+  border:1px solid var(--border2);
+  border-radius:16px;
+  padding:28px;max-width:440px;width:92%;
+  box-shadow:rgba(0,0,0,0.15) 0px 12px 36px;
+}
+.modal h3{
+  font-family:var(--serif);
+  font-size:18px;font-weight:500;
+  margin-bottom:18px;
+}
+.modal .field{margin-bottom:14px}
+.modal .btns{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}
 
 /* Toast */
-.toast{position:fixed;bottom:20px;right:20px;background:var(--text);color:var(--bg);padding:10px 18px;font-size:13px;border-radius:var(--radius-sm);z-index:200;display:none;box-shadow:0 4px 16px rgba(0,0,0,.15)}
+.toast{
+  position:fixed;bottom:24px;right:24px;
+  background:var(--text);color:var(--bg);
+  padding:12px 20px;font-size:13px;font-weight:500;
+  border-radius:var(--radius-sm);z-index:200;
+  display:none;
+  box-shadow:rgba(0,0,0,0.15) 0px 4px 16px;
+}
 
 /* OAuth status */
-.oauth-status{text-align:center;padding:16px;color:var(--text3);font-size:13px}
-.spin{display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--text);border-radius:50%;animation:sp .7s linear infinite;margin-right:6px;vertical-align:middle}
+.oauth-status{text-align:center;padding:18px;color:var(--text3);font-size:13px}
+.spin{
+  display:inline-block;width:16px;height:16px;
+  border:2px solid var(--border2);
+  border-top-color:var(--brand);
+  border-radius:50%;
+  animation:sp .7s linear infinite;
+  margin-right:6px;vertical-align:middle;
+}
 @keyframes sp{to{transform:rotate(360deg)}}
 
-.empty{text-align:center;padding:32px 16px;color:var(--text3);font-size:13px}
+.empty{text-align:center;padding:36px 18px;color:var(--text3);font-size:13px}
 
 @media(max-width:640px){.stats{grid-template-columns:repeat(2,1fr)}.cfg-grid{grid-template-columns:1fr}}
 </style>
@@ -156,7 +308,7 @@ label{display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bot
 <h1>JK2API <span>Admin</span></h1>
 <div class="hdr-right">
 <button class="btn-ghost btn" onclick="refresh()">&#x21bb;</button>
-<button class="btn btn-sm" onclick="logout()">Logout</button>
+<button class="btn btn-sm btn-sand" onclick="logout()">Logout</button>
 </div>
 </header>
 
@@ -171,10 +323,10 @@ label{display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bot
 <div id="dashboard" class="panel active">
 <div class="stats" id="stats-el"></div>
 <div class="card">
-<div class="card-hdr"><div class="card-title">Auth Token Pool</div>
+<div class="card-hdr"><div class="card-title">认证令牌池</div>
 <div class="card-actions">
-<button class="btn btn-sm" onclick="showModal('add-key')">+ Add Token</button>
-<button class="btn btn-sm" onclick="apiReload()">Reload</button>
+<button class="btn btn-sm" onclick="showModal('add-key')">+ 添加</button>
+<button class="btn btn-sm btn-sand" onclick="apiReload()">刷新</button>
 </div></div>
 <div id="pool-table"></div>
 </div>
@@ -183,11 +335,11 @@ label{display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bot
 <!-- API Keys -->
 <div id="apikeys" class="panel">
 <div class="card">
-<div class="card-hdr"><div class="card-title">Client API Keys</div>
+<div class="card-hdr"><div class="card-title">客户端 API Keys</div>
 <div class="card-actions">
-<button class="btn btn-sm btn-primary" onclick="generateKey()">Generate New Key</button>
+<button class="btn btn-sm btn-primary" onclick="generateKey()">生成</button>
 </div></div>
-<p style="color:var(--text3);font-size:13px;margin-bottom:12px">These keys allow clients to access the proxy. Distributed to users via OAuth or manually.</p>
+<p style="color:var(--text3);font-size:13px;margin-bottom:14px;line-height:1.6">客户端访问所需的 Key，通过 OAuth 发放或手动生成。</p>
 <div id="apikeys-list"></div>
 </div>
 </div>
@@ -195,20 +347,19 @@ label{display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bot
 <!-- OAuth -->
 <div id="oauth" class="panel">
 <div class="card">
-<div class="card-hdr"><div class="card-title">OAuth Login</div></div>
-<p style="color:var(--text3);font-size:13px;margin-bottom:16px">
-Initiate a GitHub OAuth login to contribute a JieKou auth token to the pool.<br>
-On success, the login token is saved to <code style="font-family:var(--mono);font-size:12px;background:var(--surface);padding:1px 4px;border-radius:3px">auths/</code> and a new API key is generated as reward.
+<div class="card-hdr"><div class="card-title">OAuth 登录</div></div>
+<p style="color:var(--text3);font-size:13px;margin-bottom:18px;line-height:1.7">
+GitHub 登录贡献登录态至共享池，成功后自动生成 API Key。
 </p>
 <button class="btn btn-primary" id="oauth-btn" onclick="startOAuth()">
 <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="vertical-align:middle"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
-Start GitHub OAuth
+GitHub 登录
 </button>
 <div id="oauth-status" class="oauth-status" style="display:none"></div>
-<div id="oauth-result" style="display:none;margin-top:16px">
-<div style="font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:.3px;margin-bottom:4px">Reward API Key</div>
-<div style="font-family:var(--mono);font-size:13px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;cursor:pointer;word-break:break-all" id="oauth-key" onclick="copyText(this.textContent)"></div>
-<div style="font-size:12px;color:var(--text3);margin-top:6px" id="oauth-email"></div>
+<div id="oauth-result" style="display:none;margin-top:18px">
+<div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;font-weight:500">API Key</div>
+<div style="font-family:var(--mono);font-size:13px;background:var(--bg);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:12px 14px;cursor:pointer;word-break:break-all;box-shadow:var(--bg) 0px 0px 0px 0px, var(--ring) 0px 0px 0px 1px" id="oauth-key" onclick="copyText(this.textContent)"></div>
+<div style="font-size:12px;color:var(--text3);margin-top:8px" id="oauth-email"></div>
 </div>
 </div>
 </div>
@@ -238,24 +389,24 @@ Start GitHub OAuth
 <div class="cfg-field"><label>Cooldown</label><input type="text" id="c-cool" placeholder="1h"></div>
 </div>
 <div class="cfg-sec" style="grid-column:1/-1"><h3>Rate Limits</h3>
-<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
 <div class="cfg-field"><label>Global RPM</label><input type="number" id="c-grpm" placeholder="0" min="0"></div>
 <div class="cfg-field"><label>Account RPM</label><input type="number" id="c-arpm" placeholder="0" min="0"></div>
 <div class="cfg-field"><label>Client RPM</label><input type="number" id="c-crpm" placeholder="0" min="0"></div>
 </div></div>
 </div>
-<div style="margin-top:14px;display:flex;gap:6px">
-<button class="btn btn-primary" onclick="saveVisual()">Save &amp; Reload</button>
-<button class="btn" onclick="loadVisual()">Discard</button>
+<div style="margin-top:16px;display:flex;gap:8px">
+<button class="btn btn-primary" onclick="saveVisual()">保存</button>
+<button class="btn btn-sand" onclick="loadVisual()">撤销</button>
 </div>
 </div>
 
 <div id="cfg-yaml" style="display:none">
 <div class="card" style="margin:0">
 <textarea id="yaml-editor" spellcheck="false"></textarea>
-<div style="display:flex;gap:6px;margin-top:10px">
-<button class="btn btn-primary" onclick="saveYaml()">Save &amp; Reload</button>
-<button class="btn" onclick="loadYaml()">Discard</button>
+<div style="display:flex;gap:8px;margin-top:12px">
+<button class="btn btn-primary" onclick="saveYaml()">保存</button>
+<button class="btn btn-sand" onclick="loadYaml()">撤销</button>
 </div>
 </div>
 </div>
@@ -266,10 +417,10 @@ Start GitHub OAuth
 <!-- Add Token Modal -->
 <div class="overlay" id="add-key">
 <div class="modal">
-<h3>Add Auth Token</h3>
-<div class="field"><label>Label</label><input type="text" id="ak-label" placeholder="account-name"></div>
-<div class="field"><label>Token (JieKou cookie)</label><input type="text" id="ak-token" placeholder="cookie token value"></div>
-<div class="btns"><button class="btn" onclick="closeModals()">Cancel</button><button class="btn btn-primary" onclick="addKey()">Add</button></div>
+<h3>添加认证令牌</h3>
+<div class="field"><label>标签</label><input type="text" id="ak-label" placeholder="账号名称"></div>
+<div class="field"><label>Token (JieKou Cookie)</label><input type="text" id="ak-token" placeholder="cookie 值"></div>
+<div class="btns"><button class="btn btn-sand" onclick="closeModals()">取消</button><button class="btn btn-primary" onclick="addKey()">添加</button></div>
 </div>
 </div>
 
@@ -280,7 +431,7 @@ let T='';const A='/admin/api';
 function login(){T=document.getElementById('token-input').value;if(!T)return;localStorage.setItem('jk2t',T);
 api('/status').then(r=>{if(!r.ok)throw r;return r.json()}).then(()=>{
 document.getElementById('auth-section').style.display='none';document.getElementById('main-section').style.display='block';
-refresh();loadKeys();loadVisual();loadYaml();}).catch(()=>{toast('Invalid token');localStorage.removeItem('jk2t');});}
+refresh();loadKeys();loadVisual();loadYaml();}).catch(()=>{toast('令牌无效');localStorage.removeItem('jk2t');});}
 function logout(){localStorage.removeItem('jk2t');location.reload();}
 function api(p,o={}){o.headers={...o.headers,'Authorization':'Bearer '+T};return fetch(A+p,o).then(r=>{if(r.status===401){localStorage.removeItem('jk2t');location.reload();}return r;});}
 
@@ -302,7 +453,7 @@ const br=d.total-d.healthy;
 document.getElementById('stats-el').innerHTML=
 st(d.total,'Total','')+st(d.healthy,'Healthy','green')+st(br,'Broken',br>0?'red':'')+st(d.threshold,'Threshold','');
 const w=document.getElementById('pool-table');
-if(!d.keys||!d.keys.length){w.innerHTML='<div class="empty">No auth tokens in pool</div>';return;}
+if(!d.keys||!d.keys.length){w.innerHTML='<div class="empty">暂无认证令牌</div>';return;}
 w.innerHTML='<table><thead><tr><th>#</th><th>Fingerprint</th><th>Label</th><th>Status</th><th>Fails</th><th></th></tr></thead><tbody>'+
 d.keys.map(k=>`<tr><td>${k.index}</td><td class="mono">${k.fingerprint}</td><td>${k.label}</td>
 <td><span class="dot ${k.broken?'bad':'ok'}"></span>${k.broken?'Broken':'OK'}</td><td>${k.fails}</td>
@@ -310,8 +461,8 @@ d.keys.map(k=>`<tr><td>${k.index}</td><td class="mono">${k.fingerprint}</td><td>
 <button class="btn btn-sm btn-danger" onclick="delK('${k.label}')">Del</button></td></tr>`).join('')+'</tbody></table>';});}
 function st(v,l,c){return `<div class="stat ${c}"><div class="stat-val">${v}</div><div class="stat-lbl">${l}</div></div>`;}
 function tripK(i,b){api('/keys/'+i+'/'+(b?'reset':'trip'),{method:'POST'}).then(()=>refresh());}
-function delK(l){if(!confirm('Delete "'+l+'"?'))return;api('/keys?label='+encodeURIComponent(l),{method:'DELETE'}).then(()=>{refresh();toast('Deleted');});}
-function apiReload(){api('/reload',{method:'POST'}).then(()=>{refresh();toast('Reloaded');});}
+function delK(l){if(!confirm('确认删除 "'+l+'" ?'))return;api('/keys?label='+encodeURIComponent(l),{method:'DELETE'}).then(()=>{refresh();toast('已删除');});}
+function apiReload(){api('/reload',{method:'POST'}).then(()=>{refresh();toast('已刷新');});}
 
 // Add token modal
 function showModal(id){document.getElementById(id).classList.add('show');}
@@ -319,32 +470,32 @@ function closeModals(){document.querySelectorAll('.overlay').forEach(m=>m.classL
 document.querySelectorAll('.overlay').forEach(m=>m.onclick=function(e){if(e.target===this)closeModals();});
 function addKey(){
 const l=document.getElementById('ak-label').value,t=document.getElementById('ak-token').value;
-if(!t){toast('Token required');return;}
+if(!t){toast('请输入 Token');return;}
 api('/keys',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:t,label:l})})
-.then(r=>r.json()).then(()=>{closeModals();document.getElementById('ak-label').value='';document.getElementById('ak-token').value='';refresh();toast('Token added');});}
+.then(r=>r.json()).then(()=>{closeModals();document.getElementById('ak-label').value='';document.getElementById('ak-token').value='';refresh();toast('已添加');});}
 
 // API Keys
 function loadKeys(){api('/apikeys').then(r=>r.json()).then(d=>{
 const el=document.getElementById('apikeys-list');
-if(!d.keys||!d.keys.length){el.innerHTML='<div class="empty">No API keys configured. Generate one or use OAuth to issue keys.</div>';return;}
+if(!d.keys||!d.keys.length){el.innerHTML='<div class="empty">暂无 API Key，可手动生成或通过 OAuth 发放</div>';return;}
 el.innerHTML=d.keys.map(k=>`<div class="apikey-item"><div class="apikey-val">${k}</div>
-<div><button class="btn btn-sm" onclick="copyText('${k}')">Copy</button>
+<div style="display:flex;gap:6px"><button class="btn btn-sm" onclick="copyText('${k}')">Copy</button>
 <button class="btn btn-sm btn-danger" onclick="delApiKey('${k}')">Del</button></div></div>`).join('');});}
 function generateKey(){api('/apikeys',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}).then(r=>r.json()).then(d=>{
-if(d.key){toast('Key generated');copyText(d.key);loadKeys();}});}
-function delApiKey(k){if(!confirm('Delete this API key?'))return;
-api('/apikeys?key='+encodeURIComponent(k),{method:'DELETE'}).then(()=>{loadKeys();toast('Key deleted');});}
+if(d.key){toast('已生成');copyText(d.key);loadKeys();}});}
+function delApiKey(k){if(!confirm('确认删除此 Key ?'))return;
+api('/apikeys?key='+encodeURIComponent(k),{method:'DELETE'}).then(()=>{loadKeys();toast('已删除');});}
 
 // OAuth
 let oauthTimer;
 function startOAuth(){
 document.getElementById('oauth-btn').style.display='none';
 document.getElementById('oauth-status').style.display='block';
-document.getElementById('oauth-status').innerHTML='<span class="spin"></span> Initiating...';
+document.getElementById('oauth-status').innerHTML='<span class="spin"></span> 正在发起...';
 document.getElementById('oauth-result').style.display='none';
 fetch('/public/oauth/start',{method:'POST'}).then(r=>r.json()).then(d=>{
 if(!d.login_url){throw new Error('No login URL');}
-document.getElementById('oauth-status').innerHTML='<span class="spin"></span> Waiting for GitHub authorization...';
+document.getElementById('oauth-status').innerHTML='<span class="spin"></span> 等待 GitHub 授权...';
 const popup=window.open(d.login_url,'oauth','width=600,height=700');
 oauthTimer=setInterval(()=>{
 fetch(`/public/oauth/poll?fp=${d.fingerprint_id}&fph=${d.fingerprint_hash}&exp=${d.expires_at}`)
@@ -354,10 +505,10 @@ document.getElementById('oauth-result').style.display='block';
 document.getElementById('oauth-key').textContent=p.api_key;
 document.getElementById('oauth-email').textContent=p.email?'Account: '+p.email:'';
 document.getElementById('oauth-btn').style.display='inline-flex';
-refresh();loadKeys();toast('OAuth success — token added to pool, API key issued');}});
+refresh();loadKeys();toast('登录成功，已发放 API Key');}});
 },3000);
 setTimeout(()=>{if(oauthTimer){clearInterval(oauthTimer);
-document.getElementById('oauth-status').innerHTML='Timed out. <a href="#" onclick="resetOAuth()">Try again</a>';
+document.getElementById('oauth-status').innerHTML='已超时。<a href="#" onclick="resetOAuth()">重试</a>';
 document.getElementById('oauth-btn').style.display='inline-flex';}},600000);
 }).catch(e=>{
 document.getElementById('oauth-status').innerHTML='Error: '+e.message;
@@ -378,7 +529,6 @@ document.getElementById('c-grpm').value=g('global_rpm','0');
 document.getElementById('c-arpm').value=g('account_rpm','0');
 document.getElementById('c-crpm').value=g('client_rpm','0');});}
 function saveVisual(){
-// Read current api_keys from server (don't overwrite them from visual editor)
 api('/apikeys').then(r=>r.json()).then(d=>{
 const keys=d.keys||[];
 const yaml=`server:
@@ -398,15 +548,15 @@ limits:
   account_rpm: ${$('c-arpm').value||0}
   client_rpm: ${$('c-crpm').value||0}
 `;
-api('/config',{method:'PUT',body:yaml}).then(r=>r.json()).then(()=>{toast('Saved');refresh();});});}
+api('/config',{method:'PUT',body:yaml}).then(r=>r.json()).then(()=>{toast('已保存');refresh();});});}
 function $(id){return document.getElementById(id);}
 
 // YAML config
 function loadYaml(){api('/config').then(r=>r.text()).then(t=>document.getElementById('yaml-editor').value=t);}
-function saveYaml(){api('/config',{method:'PUT',body:document.getElementById('yaml-editor').value}).then(r=>r.json()).then(()=>{toast('Saved');refresh();loadVisual();loadKeys();});}
+function saveYaml(){api('/config',{method:'PUT',body:document.getElementById('yaml-editor').value}).then(r=>r.json()).then(()=>{toast('已保存');refresh();loadVisual();loadKeys();});}
 
 // Utils
-function copyText(t){navigator.clipboard.writeText(t).then(()=>toast('Copied'));}
+function copyText(t){navigator.clipboard.writeText(t).then(()=>toast('已复制'));}
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',2500);}
 document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();
 if(document.getElementById('cfg-yaml').style.display!=='none')saveYaml();
