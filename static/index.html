@@ -3,104 +3,284 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>JieKou2API Admin</title>
+<title>JK2API Admin</title>
 <style>
+:root{
+  --bg:#f5f4ed;--surface:#faf9f5;--white:#fff;--sand:#e8e6dc;
+  --border:#f0eee6;--border-p:#e8e6dc;--ring:#d1cfc5;
+  --text:#141413;--text2:#5e5d59;--text3:#87867f;--text4:#b0aea5;
+  --brand:#c96442;--brand-h:#d97757;--err:#b53333;--ok:#3a7d44;
+  --dark:#141413;--dark2:#30302e;--focus:#3898ec;
+  --radius:12px;--radius-lg:16px;--radius-sm:8px;
+  --shadow:rgba(0,0,0,0.05) 0 4px 24px;
+  --font-serif:Georgia,'Times New Roman',serif;
+  --font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI','Inter',sans-serif;
+  --font-mono:'SF Mono','Fira Code','Consolas',monospace;
+}
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#000;color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',monospace;min-height:100vh}
-.container{max-width:960px;margin:0 auto;padding:24px}
-h1{font-size:20px;font-weight:400;letter-spacing:2px;margin-bottom:24px;border-bottom:1px solid #333;padding-bottom:12px}
-h1 span{color:#666;font-size:12px;margin-left:8px}
-.tabs{display:flex;gap:0;margin-bottom:24px;border-bottom:1px solid #333}
-.tab{padding:8px 20px;cursor:pointer;color:#666;font-size:13px;border-bottom:2px solid transparent;transition:all .2s}
-.tab.active{color:#fff;border-bottom-color:#fff}
-.tab:hover{color:#aaa}
-.panel{display:none}
-.panel.active{display:block}
-.card{border:1px solid #222;padding:16px;margin-bottom:16px}
-.card-title{font-size:13px;color:#666;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
-.stat{border:1px solid #222;padding:16px;text-align:center}
-.stat-value{font-size:28px;font-weight:300}
-.stat-label{font-size:11px;color:#666;margin-top:4px;text-transform:uppercase}
-table{width:100%;border-collapse:collapse;font-size:13px}
-th{text-align:left;padding:8px;color:#666;font-weight:400;border-bottom:1px solid #222;font-size:11px;text-transform:uppercase}
-td{padding:8px;border-bottom:1px solid #111}
-.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
-.dot.ok{background:#4f4}
-.dot.broken{background:#f44}
-.btn{background:transparent;color:#fff;border:1px solid #333;padding:6px 14px;cursor:pointer;font-size:12px;transition:all .2s}
-.btn:hover{border-color:#fff}
-.btn-sm{padding:3px 8px;font-size:11px}
-.btn-danger{border-color:#600}
-.btn-danger:hover{border-color:#f44;color:#f44}
-.login-bar{display:flex;gap:8px;margin-bottom:24px}
-.login-bar input{flex:1;background:#111;border:1px solid #333;color:#fff;padding:8px;font-size:13px}
-.login-bar input:focus{outline:none;border-color:#fff}
-textarea{width:100%;background:#111;color:#fff;border:1px solid #333;padding:12px;font-family:monospace;font-size:13px;min-height:300px;resize:vertical}
-textarea:focus{outline:none;border-color:#fff}
-.actions{display:flex;gap:8px;margin-top:12px}
-.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:100;align-items:center;justify-content:center}
-.modal.show{display:flex}
-.modal-content{background:#111;border:1px solid #333;padding:24px;max-width:400px;width:90%}
-.modal-content h3{font-size:14px;font-weight:400;margin-bottom:16px}
-.modal-content input{width:100%;background:#000;border:1px solid #333;color:#fff;padding:8px;font-size:13px;margin-bottom:8px}
-.modal-content input:focus{outline:none;border-color:#fff}
-.toast{position:fixed;bottom:24px;right:24px;background:#111;border:1px solid #333;padding:12px 20px;font-size:13px;z-index:200;display:none}
+body{background:var(--bg);color:var(--text);font-family:var(--font-sans);font-size:16px;line-height:1.6;min-height:100vh}
+::selection{background:var(--brand);color:var(--white)}
+
+/* Layout */
+.container{max-width:1000px;margin:0 auto;padding:32px 24px}
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:32px;padding-bottom:20px;border-bottom:1px solid var(--border-p)}
+header h1{font-family:var(--font-serif);font-size:28px;font-weight:500;letter-spacing:0.5px;color:var(--text)}
+header h1 span{color:var(--text3);font-family:var(--font-sans);font-size:13px;font-weight:400;margin-left:10px;letter-spacing:0}
+.header-actions{display:flex;gap:8px;align-items:center}
+
+/* Tabs */
+.tabs{display:flex;gap:4px;margin-bottom:28px;background:var(--sand);border-radius:var(--radius);padding:4px;width:fit-content}
+.tab{padding:8px 20px;cursor:pointer;color:var(--text3);font-size:14px;font-weight:500;border-radius:var(--radius-sm);transition:all .2s;user-select:none}
+.tab.active{color:var(--text);background:var(--white);box-shadow:var(--shadow)}
+.tab:hover:not(.active){color:var(--text2)}
+
+/* Panels */
+.panel{display:none}.panel.active{display:block}
+
+/* Stats */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;text-align:center;transition:box-shadow .2s}
+.stat:hover{box-shadow:var(--shadow)}
+.stat-value{font-family:var(--font-serif);font-size:36px;font-weight:500;color:var(--text);line-height:1.1}
+.stat-label{font-size:12px;color:var(--text3);margin-top:6px;text-transform:uppercase;letter-spacing:0.5px}
+.stat.ok .stat-value{color:var(--ok)}
+.stat.err .stat-value{color:var(--err)}
+
+/* Cards */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;margin-bottom:20px;transition:box-shadow .2s}
+.card:hover{box-shadow:var(--shadow)}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.card-title{font-family:var(--font-serif);font-size:18px;font-weight:500;color:var(--text)}
+.card-actions{display:flex;gap:8px}
+
+/* Table */
+table{width:100%;border-collapse:collapse;font-size:14px}
+thead th{text-align:left;padding:10px 12px;color:var(--text3);font-weight:500;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border-p)}
+tbody td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:rgba(0,0,0,0.015)}
+.fp{font-family:var(--font-mono);font-size:13px;color:var(--text2)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:8px}
+.dot.ok{background:var(--ok)}
+.dot.broken{background:var(--err)}
+.status-text{font-size:13px}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:6px;background:var(--sand);color:var(--text);border:none;padding:8px 16px;cursor:pointer;font-size:14px;font-weight:500;border-radius:var(--radius-sm);transition:all .15s;box-shadow:0 0 0 1px var(--ring);font-family:var(--font-sans)}
+.btn:hover{box-shadow:0 0 0 1px var(--text3);background:var(--border-p)}
+.btn:active{transform:scale(0.98)}
+.btn-brand{background:var(--brand);color:var(--white);box-shadow:0 0 0 1px var(--brand)}
+.btn-brand:hover{background:var(--brand-h);box-shadow:0 0 0 1px var(--brand-h)}
+.btn-sm{padding:5px 10px;font-size:13px;border-radius:6px}
+.btn-danger{color:var(--err);box-shadow:0 0 0 1px rgba(181,51,51,0.3)}
+.btn-danger:hover{background:rgba(181,51,51,0.08);box-shadow:0 0 0 1px var(--err)}
+.btn-dark{background:var(--dark);color:var(--text4);box-shadow:0 0 0 1px var(--dark2)}
+.btn-dark:hover{color:var(--white)}
+.btn-ghost{background:transparent;box-shadow:none;color:var(--text3);padding:6px 10px}
+.btn-ghost:hover{color:var(--text);background:var(--sand)}
+
+/* Inputs */
+input[type=text],input[type=password],input[type=number],select{
+  width:100%;background:var(--white);border:1px solid var(--border-p);color:var(--text);
+  padding:10px 14px;font-size:14px;border-radius:var(--radius);font-family:var(--font-sans);transition:border .2s}
+input:focus,select:focus{outline:none;border-color:var(--focus);box-shadow:0 0 0 3px rgba(56,152,236,0.12)}
+textarea{width:100%;background:var(--white);color:var(--text);border:1px solid var(--border-p);padding:14px;font-family:var(--font-mono);font-size:14px;line-height:1.6;min-height:320px;resize:vertical;border-radius:var(--radius);transition:border .2s}
+textarea:focus{outline:none;border-color:var(--focus);box-shadow:0 0 0 3px rgba(56,152,236,0.12)}
+label{display:block;font-size:13px;font-weight:500;color:var(--text2);margin-bottom:6px}
+
+/* Config Panel (visual editor) */
+.config-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.config-section{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:0}
+.config-section h3{font-family:var(--font-serif);font-size:16px;font-weight:500;margin-bottom:14px;color:var(--text);padding-bottom:8px;border-bottom:1px solid var(--border)}
+.config-field{margin-bottom:14px}
+.config-field:last-child{margin-bottom:0}
+.config-field input,.config-field select{margin-top:0}
+.config-mode-tabs{display:flex;gap:4px;margin-bottom:16px;background:var(--sand);border-radius:var(--radius-sm);padding:3px;width:fit-content}
+.config-mode-tab{padding:6px 14px;font-size:13px;cursor:pointer;border-radius:6px;color:var(--text3);font-weight:500;transition:all .2s;user-select:none}
+.config-mode-tab.active{background:var(--white);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+.tag-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.tag{display:inline-flex;align-items:center;gap:4px;background:var(--sand);color:var(--text2);padding:4px 10px;border-radius:20px;font-size:13px}
+.tag .remove{cursor:pointer;color:var(--text3);font-size:16px;line-height:1}
+.tag .remove:hover{color:var(--err)}
+
+/* Login */
+.login-card{max-width:380px;margin:120px auto;text-align:center}
+.login-card h2{font-family:var(--font-serif);font-size:24px;font-weight:500;margin-bottom:8px}
+.login-card p{color:var(--text3);font-size:14px;margin-bottom:24px}
+.login-card .input-group{display:flex;gap:8px}
+
+/* Modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(20,20,19,0.5);z-index:100;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-overlay.show{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:28px;max-width:440px;width:90%;box-shadow:0 24px 48px rgba(0,0,0,0.12)}
+.modal h3{font-family:var(--font-serif);font-size:18px;font-weight:500;margin-bottom:20px}
+.modal .field{margin-bottom:14px}
+.modal .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--dark);color:var(--text4);padding:12px 20px;font-size:14px;border-radius:var(--radius-sm);z-index:200;display:none;box-shadow:0 8px 24px rgba(0,0,0,0.15)}
+
+/* Empty state */
+.empty{text-align:center;padding:40px 20px;color:var(--text3)}
+.empty p{font-size:14px;margin-bottom:16px}
+
+/* Responsive */
+@media(max-width:768px){
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .config-grid{grid-template-columns:1fr}
+  .container{padding:20px 16px}
+  header h1{font-size:22px}
+}
 </style>
 </head>
 <body>
 <div class="container">
-<h1>JieKou2API <span>Admin</span></h1>
 
+<!-- Login -->
 <div id="auth-section">
-<div class="login-bar">
-<input type="password" id="token-input" placeholder="Admin Token">
-<button class="btn" onclick="login()">Login</button>
+<div class="login-card card">
+<h2>JK2API</h2>
+<p>Enter admin token to continue</p>
+<div class="input-group">
+<input type="password" id="token-input" placeholder="Admin Token" onkeydown="if(event.key==='Enter')login()">
+<button class="btn btn-brand" onclick="login()">Login</button>
+</div>
 </div>
 </div>
 
+<!-- Main -->
 <div id="main-section" style="display:none">
+<header>
+<h1>JK2API <span>Admin Console</span></h1>
+<div class="header-actions">
+<button class="btn btn-sm btn-ghost" onclick="refresh()" title="Refresh">&#x21bb;</button>
+<button class="btn btn-sm" onclick="logout()">Logout</button>
+</div>
+</header>
+
 <div class="tabs">
-<div class="tab active" onclick="switchTab('dashboard')">Dashboard</div>
-<div class="tab" onclick="switchTab('config')">Config</div>
+<div class="tab active" data-tab="dashboard">Dashboard</div>
+<div class="tab" data-tab="config">Settings</div>
 </div>
 
+<!-- Dashboard -->
 <div id="dashboard" class="panel active">
 <div class="stats" id="stats"></div>
 <div class="card">
+<div class="card-header">
 <div class="card-title">Key Pool</div>
-<div style="display:flex;gap:8px;margin-bottom:12px">
+<div class="card-actions">
 <button class="btn btn-sm" onclick="showAddKey()">+ Add Key</button>
-<button class="btn btn-sm" onclick="reload()">Reload</button>
+<button class="btn btn-sm" onclick="apiReload()">Reload</button>
 </div>
-<table>
-<thead><tr><th>#</th><th>Fingerprint</th><th>Label</th><th>Status</th><th>Fails</th><th>Actions</th></tr></thead>
-<tbody id="key-table"></tbody>
-</table>
+</div>
+<div id="key-table-wrap"></div>
 </div>
 </div>
 
+<!-- Config / Settings -->
 <div id="config" class="panel">
-<div class="card">
-<div class="card-title">config.yaml</div>
-<textarea id="config-editor"></textarea>
-<div class="actions">
-<button class="btn" onclick="saveConfig()">Save & Reload</button>
-<button class="btn" onclick="loadConfig()">Discard</button>
+<div class="config-mode-tabs">
+<div class="config-mode-tab active" data-mode="visual">Visual</div>
+<div class="config-mode-tab" data-mode="yaml">YAML</div>
+</div>
+
+<div id="config-visual" class="config-panel">
+<div class="config-grid">
+<div class="config-section">
+<h3>Server</h3>
+<div class="config-field">
+<label>Listen Address</label>
+<input type="text" id="cfg-listen" placeholder=":8080">
+</div>
+<div class="config-field">
+<label>Client API Keys</label>
+<div class="tag-list" id="cfg-apikeys-tags"></div>
+<div style="display:flex;gap:6px;margin-top:8px">
+<input type="text" id="cfg-apikey-input" placeholder="Add API key..." style="flex:1">
+<button class="btn btn-sm" onclick="addApiKeyTag()">Add</button>
+</div>
+</div>
+</div>
+<div class="config-section">
+<h3>Upstream</h3>
+<div class="config-field">
+<label>Base URL</label>
+<input type="text" id="cfg-upstream" placeholder="https://jiekou.ai">
+</div>
+<div class="config-field">
+<label>Default Model</label>
+<input type="text" id="cfg-model" placeholder="claude-opus-4-7">
+</div>
+</div>
+<div class="config-section">
+<h3>Auth</h3>
+<div class="config-field">
+<label>Auths Directory</label>
+<input type="text" id="cfg-authdir" placeholder="auths">
+</div>
+<div class="config-field">
+<label>Watch Interval</label>
+<input type="text" id="cfg-watch" placeholder="15s">
+</div>
+</div>
+<div class="config-section">
+<h3>Circuit Breaker</h3>
+<div class="config-field">
+<label>Failure Threshold</label>
+<input type="number" id="cfg-threshold" placeholder="3" min="1">
+</div>
+<div class="config-field">
+<label>Cooldown</label>
+<input type="text" id="cfg-cooldown" placeholder="1h">
+</div>
+</div>
+<div class="config-section" style="grid-column:1/-1">
+<h3>Rate Limits</h3>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+<div class="config-field">
+<label>Global RPM</label>
+<input type="number" id="cfg-grpm" placeholder="0 = unlimited" min="0">
+</div>
+<div class="config-field">
+<label>Account RPM</label>
+<input type="number" id="cfg-arpm" placeholder="0 = unlimited" min="0">
+</div>
+<div class="config-field">
+<label>Client RPM</label>
+<input type="number" id="cfg-crpm" placeholder="0 = unlimited" min="0">
+</div>
+</div>
+</div>
+</div>
+<div style="margin-top:16px;display:flex;gap:8px">
+<button class="btn btn-brand" onclick="saveVisualConfig()">Save &amp; Reload</button>
+<button class="btn" onclick="loadVisualConfig()">Discard Changes</button>
+</div>
+</div>
+
+<div id="config-yaml" class="config-panel" style="display:none">
+<div class="card" style="margin-bottom:0">
+<textarea id="config-editor" spellcheck="false"></textarea>
+<div style="display:flex;gap:8px;margin-top:12px">
+<button class="btn btn-brand" onclick="saveYamlConfig()">Save &amp; Reload</button>
+<button class="btn" onclick="loadYamlConfig()">Discard</button>
+</div>
 </div>
 </div>
 </div>
 </div>
 </div>
 
-<div class="modal" id="add-key-modal">
-<div class="modal-content">
-<h3>Add Key</h3>
-<input id="new-label" placeholder="Label">
-<input id="new-token" placeholder="Token (cookie value)">
+<!-- Add Key Modal -->
+<div class="modal-overlay" id="add-key-modal">
+<div class="modal">
+<h3>Add Auth Token</h3>
+<div class="field"><label>Label</label><input type="text" id="new-label" placeholder="e.g. account-name"></div>
+<div class="field"><label>Token</label><input type="text" id="new-token" placeholder="JieKou cookie token value"></div>
 <div class="actions">
-<button class="btn" onclick="addKey()">Add</button>
 <button class="btn" onclick="closeModal()">Cancel</button>
+<button class="btn btn-brand" onclick="addKey()">Add Key</button>
 </div>
 </div>
 </div>
@@ -109,22 +289,21 @@ textarea:focus{outline:none;border-color:#fff}
 
 <script>
 let adminToken='';
+let cfgApiKeys=[];
 const API='/admin/api';
 
+// --- Auth ---
 function login(){
   adminToken=document.getElementById('token-input').value;
   if(!adminToken)return;
   localStorage.setItem('jk2api_token',adminToken);
-  fetch(API+'/status',{headers:{'Authorization':'Bearer '+adminToken}})
-    .then(r=>{if(!r.ok)throw r;return r.json()})
-    .then(()=>{
-      document.getElementById('auth-section').style.display='none';
-      document.getElementById('main-section').style.display='block';
-      refresh();loadConfig();
-    })
-    .catch(()=>toast('Invalid token'));
+  api('/status').then(r=>{if(!r.ok)throw r;return r.json()}).then(()=>{
+    document.getElementById('auth-section').style.display='none';
+    document.getElementById('main-section').style.display='block';
+    refresh();loadVisualConfig();loadYamlConfig();
+  }).catch(()=>{toast('Invalid token');localStorage.removeItem('jk2api_token');});
 }
-
+function logout(){localStorage.removeItem('jk2api_token');location.reload();}
 function api(path,opts={}){
   opts.headers={...opts.headers,'Authorization':'Bearer '+adminToken};
   return fetch(API+path,opts).then(r=>{
@@ -133,82 +312,161 @@ function api(path,opts={}){
   });
 }
 
+// --- Tabs ---
+document.querySelectorAll('.tabs .tab').forEach(t=>t.addEventListener('click',function(){
+  document.querySelectorAll('.tabs .tab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+  this.classList.add('active');
+  document.getElementById(this.dataset.tab).classList.add('active');
+  if(this.dataset.tab==='config'){loadVisualConfig();loadYamlConfig();}
+}));
+document.querySelectorAll('.config-mode-tab').forEach(t=>t.addEventListener('click',function(){
+  document.querySelectorAll('.config-mode-tab').forEach(x=>x.classList.remove('active'));
+  this.classList.add('active');
+  document.querySelectorAll('.config-panel').forEach(x=>x.style.display='none');
+  document.getElementById('config-'+this.dataset.mode).style.display='block';
+}));
+
+// --- Dashboard ---
 function refresh(){
   api('/status').then(r=>r.json()).then(d=>{
+    const broken=d.total-d.healthy;
     document.getElementById('stats').innerHTML=
-      stat(d.total,'Total')+stat(d.healthy,'Healthy')+stat(d.total-d.healthy,'Broken')+stat(d.threshold,'Threshold');
-    const tb=document.getElementById('key-table');
-    tb.innerHTML=d.keys.map((k,i)=>`<tr>
-      <td>${k.index}</td>
-      <td style="font-family:monospace;font-size:12px">${k.fingerprint}</td>
-      <td>${k.label}</td>
-      <td><span class="dot ${k.broken?'broken':'ok'}"></span>${k.broken?'Broken':'OK'}</td>
-      <td>${k.fails}</td>
-      <td>
-        <button class="btn btn-sm" onclick="tripKey(${k.index})">${k.broken?'Reset':'Trip'}</button>
-        <button class="btn btn-sm btn-danger" onclick="deleteKey('${k.label}')">Del</button>
-      </td>
-    </tr>`).join('');
+      mkStat(d.total,'Total Keys','')+mkStat(d.healthy,'Healthy','ok')+mkStat(broken,'Broken',broken>0?'err':'')+mkStat(d.threshold,'Threshold','');
+    const wrap=document.getElementById('key-table-wrap');
+    if(!d.keys||d.keys.length===0){
+      wrap.innerHTML='<div class="empty"><p>No keys in pool</p><button class="btn btn-brand" onclick="showAddKey()">Add First Key</button></div>';
+      return;
+    }
+    wrap.innerHTML='<table><thead><tr><th>#</th><th>Fingerprint</th><th>Label</th><th>Status</th><th>Fails</th><th>Actions</th></tr></thead><tbody>'+
+      d.keys.map(k=>`<tr>
+        <td>${k.index}</td>
+        <td class="fp">${k.fingerprint}</td>
+        <td>${k.label}</td>
+        <td><span class="dot ${k.broken?'broken':'ok'}"></span><span class="status-text">${k.broken?'Broken':'Healthy'}</span></td>
+        <td>${k.fails}</td>
+        <td style="white-space:nowrap">
+          <button class="btn btn-sm" onclick="tripKey(${k.index},${k.broken})">${k.broken?'Reset':'Trip'}</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteKey('${k.label}')">Delete</button>
+        </td>
+      </tr>`).join('')+'</tbody></table>';
   });
 }
+function mkStat(v,l,cls){return `<div class="stat ${cls}"><div class="stat-value">${v}</div><div class="stat-label">${l}</div></div>`;}
 
-function stat(v,l){return `<div class="stat"><div class="stat-value">${v}</div><div class="stat-label">${l}</div></div>`;}
+// --- Visual Config ---
+function loadVisualConfig(){
+  api('/config').then(r=>r.text()).then(raw=>{
+    const lines=raw.split('\n');
+    const get=(key,def)=>{
+      for(const l of lines){const m=l.match(new RegExp(`^\\s*${key}:\\s*"?([^"#]*)"?`));if(m)return m[1].trim();}
+      return def;
+    };
+    document.getElementById('cfg-listen').value=get('listen',':8080');
+    document.getElementById('cfg-upstream').value=get('base_url','https://jiekou.ai');
+    document.getElementById('cfg-model').value=get('default_model','claude-opus-4-7');
+    document.getElementById('cfg-authdir').value=get('dir','auths');
+    document.getElementById('cfg-watch').value=get('watch_interval','15s');
+    document.getElementById('cfg-threshold').value=get('threshold','3');
+    document.getElementById('cfg-cooldown').value=get('cooldown','1h');
+    document.getElementById('cfg-grpm').value=get('global_rpm','0');
+    document.getElementById('cfg-arpm').value=get('account_rpm','0');
+    document.getElementById('cfg-crpm').value=get('client_rpm','0');
+    // Parse api_keys
+    cfgApiKeys=[];
+    let inKeys=false;
+    for(const l of lines){
+      if(/^\s*api_keys:/.test(l)){inKeys=true;
+        const inl=l.match(/\[([^\]]*)\]/);
+        if(inl){cfgApiKeys=inl[1].split(',').map(s=>s.trim().replace(/"/g,'')).filter(Boolean);inKeys=false;}
+        continue;
+      }
+      if(inKeys){if(/^\s*-\s/.test(l)){cfgApiKeys.push(l.replace(/^\s*-\s*/,'').replace(/"/g,'').trim());}else{inKeys=false;}}
+    }
+    renderApiKeyTags();
+  });
+}
+function renderApiKeyTags(){
+  const c=document.getElementById('cfg-apikeys-tags');
+  c.innerHTML=cfgApiKeys.length===0?'<span style="color:var(--text3);font-size:13px">No keys (open access)</span>':
+    cfgApiKeys.map((k,i)=>`<span class="tag"><span style="font-family:var(--font-mono);font-size:12px">${k.length>20?k.slice(0,8)+'...'+k.slice(-4):k}</span><span class="remove" onclick="removeApiKeyTag(${i})">&times;</span></span>`).join('');
+}
+function addApiKeyTag(){
+  const inp=document.getElementById('cfg-apikey-input');
+  const v=inp.value.trim();if(!v)return;
+  cfgApiKeys.push(v);inp.value='';renderApiKeyTags();
+}
+function removeApiKeyTag(i){cfgApiKeys.splice(i,1);renderApiKeyTags();}
 
-function switchTab(id){
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  event.target.classList.add('active');
+function saveVisualConfig(){
+  const yaml=`server:
+  listen: "${document.getElementById('cfg-listen').value}"
+  api_keys:${cfgApiKeys.length===0?' []':'\n'+cfgApiKeys.map(k=>`    - "${k}"`).join('\n')}
+
+upstream:
+  base_url: "${document.getElementById('cfg-upstream').value}"
+  default_model: "${document.getElementById('cfg-model').value}"
+
+auth:
+  dir: "${document.getElementById('cfg-authdir').value}"
+  watch_interval: ${document.getElementById('cfg-watch').value}
+  breaker:
+    threshold: ${document.getElementById('cfg-threshold').value||3}
+    cooldown: ${document.getElementById('cfg-cooldown').value||'1h'}
+
+limits:
+  global_rpm: ${document.getElementById('cfg-grpm').value||0}
+  account_rpm: ${document.getElementById('cfg-arpm').value||0}
+  client_rpm: ${document.getElementById('cfg-crpm').value||0}
+`;
+  api('/config',{method:'PUT',body:yaml}).then(r=>r.json()).then(()=>{toast('Settings saved');refresh();});
 }
 
-function loadConfig(){
-  api('/config').then(r=>r.text()).then(t=>document.getElementById('config-editor').value=t);
-}
-
-function saveConfig(){
+// --- YAML Config ---
+function loadYamlConfig(){api('/config').then(r=>r.text()).then(t=>document.getElementById('config-editor').value=t);}
+function saveYamlConfig(){
   api('/config',{method:'PUT',body:document.getElementById('config-editor').value})
-    .then(r=>r.json()).then(()=>{toast('Config saved');refresh();});
+    .then(r=>r.json()).then(()=>{toast('Config saved');refresh();loadVisualConfig();});
 }
 
+// --- Keys ---
 function showAddKey(){document.getElementById('add-key-modal').classList.add('show');}
-function closeModal(){document.querySelectorAll('.modal').forEach(m=>m.classList.remove('show'));}
+function closeModal(){document.querySelectorAll('.modal-overlay').forEach(m=>m.classList.remove('show'));}
+document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',function(e){if(e.target===this)closeModal();}));
 
 function addKey(){
   const label=document.getElementById('new-label').value;
   const token=document.getElementById('new-token').value;
-  if(!token){toast('Token required');return;}
+  if(!token){toast('Token is required');return;}
   api('/keys',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token,label})})
-    .then(r=>r.json()).then(()=>{closeModal();refresh();toast('Key added');});
+    .then(r=>r.json()).then(()=>{closeModal();document.getElementById('new-label').value='';document.getElementById('new-token').value='';refresh();toast('Key added');});
 }
-
 function deleteKey(label){
-  if(!confirm('Delete '+label+'?'))return;
-  api('/keys?label='+encodeURIComponent(label),{method:'DELETE'})
-    .then(r=>r.json()).then(()=>{refresh();toast('Key deleted');});
+  if(!confirm('Delete key "'+label+'"?'))return;
+  api('/keys?label='+encodeURIComponent(label),{method:'DELETE'}).then(r=>r.json()).then(()=>{refresh();toast('Key deleted');});
 }
-
-function tripKey(idx){
-  const snap=document.querySelectorAll('#key-table tr')[idx];
-  const isBroken=snap?.querySelector('.dot')?.classList.contains('broken');
-  api('/keys/'+idx+'/'+(isBroken?'reset':'trip'),{method:'POST'})
-    .then(r=>r.json()).then(()=>refresh());
+function tripKey(idx,isBroken){
+  api('/keys/'+idx+'/'+(isBroken?'reset':'trip'),{method:'POST'}).then(r=>r.json()).then(()=>refresh());
 }
-
-function reload(){
+function apiReload(){
   api('/reload',{method:'POST'}).then(r=>r.json()).then(()=>{refresh();toast('Reloaded');});
 }
 
+// --- Toast ---
 function toast(msg){
   const t=document.getElementById('toast');
   t.textContent=msg;t.style.display='block';
-  setTimeout(()=>t.style.display='none',2000);
+  clearTimeout(t._timer);t._timer=setTimeout(()=>t.style.display='none',2500);
 }
 
-// Auto-login from localStorage
-(function(){
-  const saved=localStorage.getItem('jk2api_token');
-  if(saved){document.getElementById('token-input').value=saved;login();}
-})();
+// --- Keyboard ---
+document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();
+  if(document.getElementById('config-yaml').style.display!=='none')saveYamlConfig();
+  else if(document.getElementById('config').classList.contains('active'))saveVisualConfig();
+}});
+
+// --- Auto login ---
+(function(){const s=localStorage.getItem('jk2api_token');if(s){document.getElementById('token-input').value=s;login();}})();
 </script>
 </body>
 </html>

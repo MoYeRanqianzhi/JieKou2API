@@ -3,49 +3,58 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>JieKou2API — Get API Key</title>
+<title>JK2API — Get API Key</title>
 <style>
+:root{--bg:#f5f4ed;--surface:#faf9f5;--white:#fff;--sand:#e8e6dc;--border:#f0eee6;--border-p:#e8e6dc;--ring:#d1cfc5;--text:#141413;--text2:#5e5d59;--text3:#87867f;--brand:#c96442;--brand-h:#d97757;--ok:#3a7d44;--dark:#141413;--radius:12px;--font-serif:Georgia,'Times New Roman',serif;--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI','Inter',sans-serif;--font-mono:'SF Mono','Fira Code','Consolas',monospace}
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#000;color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',monospace;min-height:100vh;display:flex;align-items:center;justify-content:center}
-.card{border:1px solid #222;padding:40px;max-width:420px;width:90%;text-align:center}
-h1{font-size:18px;font-weight:400;letter-spacing:2px;margin-bottom:8px}
-.sub{color:#666;font-size:12px;margin-bottom:32px}
-.btn{display:inline-flex;align-items:center;gap:8px;background:transparent;color:#fff;border:1px solid #333;padding:12px 28px;cursor:pointer;font-size:14px;transition:all .2s;text-decoration:none}
-.btn:hover{border-color:#fff}
-.btn svg{width:20px;height:20px;fill:#fff}
-.result{display:none;margin-top:24px;text-align:left}
-.result .label{color:#666;font-size:11px;text-transform:uppercase;margin-bottom:6px}
-.key-box{background:#111;border:1px solid #333;padding:12px;font-family:monospace;font-size:13px;word-break:break-all;margin-bottom:12px;position:relative;cursor:pointer}
-.key-box:hover{border-color:#fff}
-.key-box::after{content:'COPY';position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:10px;color:#666}
-.email{color:#666;font-size:12px;margin-top:8px}
-.spinner{display:none;margin:24px auto;width:20px;height:20px;border:2px solid #333;border-top-color:#fff;border-radius:50%;animation:spin 1s linear infinite}
+body{background:var(--bg);color:var(--text);font-family:var(--font-sans);font-size:16px;line-height:1.6;min-height:100vh;display:flex;align-items:center;justify-content:center}
+::selection{background:var(--brand);color:var(--white)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:48px 40px;max-width:440px;width:90%;text-align:center;box-shadow:rgba(0,0,0,0.05) 0 4px 24px}
+h1{font-family:var(--font-serif);font-size:28px;font-weight:500;margin-bottom:6px;color:var(--text)}
+.sub{color:var(--text3);font-size:14px;margin-bottom:36px}
+.btn{display:inline-flex;align-items:center;gap:10px;background:var(--dark);color:var(--sand);border:none;padding:14px 32px;cursor:pointer;font-size:15px;font-weight:500;border-radius:var(--radius);transition:all .15s;font-family:var(--font-sans)}
+.btn:hover{background:#2a2a28}
+.btn:active{transform:scale(0.98)}
+.btn svg{width:20px;height:20px;fill:currentColor}
+.btn-brand{background:var(--brand);color:var(--white)}
+.btn-brand:hover{background:var(--brand-h)}
+.result{display:none;margin-top:28px;text-align:left}
+.result .label{color:var(--text3);font-size:12px;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;font-weight:500}
+.key-box{background:var(--white);border:1px solid var(--border-p);padding:14px 16px;font-family:var(--font-mono);font-size:14px;word-break:break-all;border-radius:var(--radius);position:relative;cursor:pointer;transition:all .2s;margin-bottom:16px}
+.key-box:hover{border-color:var(--ring);box-shadow:0 0 0 3px rgba(209,207,197,0.3)}
+.key-box .hint{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--text3);font-family:var(--font-sans);text-transform:uppercase;letter-spacing:0.5px}
+.key-box.copied{border-color:var(--ok)}
+.key-box.copied .hint{color:var(--ok)}
+.usage{color:var(--text2);font-size:13px;line-height:1.7;background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px}
+.usage code{font-family:var(--font-mono);font-size:12px;background:var(--sand);padding:2px 6px;border-radius:4px;color:var(--text)}
+.email{color:var(--text3);font-size:13px;margin-top:12px;text-align:center}
+.spinner{display:none;margin:28px auto;width:24px;height:24px;border:2.5px solid var(--border-p);border-top-color:var(--brand);border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-.status{color:#666;font-size:12px;margin-top:8px;display:none}
-.error{color:#f44;font-size:12px;margin-top:12px;display:none}
+.status{color:var(--text3);font-size:14px;margin-top:10px;display:none}
+.error{color:#b53333;font-size:13px;margin-top:14px;display:none}
 </style>
 </head>
 <body>
 <div class="card">
-<h1>JieKou2API</h1>
-<p class="sub">使用 GitHub 登录获取 API Key</p>
+<h1>JK2API</h1>
+<p class="sub">Sign in with GitHub to get your API key</p>
 
 <button class="btn" id="login-btn" onclick="startLogin()">
 <svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
-GitHub 登录
+GitHub Login
 </button>
 
 <div class="spinner" id="spinner"></div>
-<div class="status" id="status">等待授权完成...</div>
+<div class="status" id="status">Waiting for authorization...</div>
 <div class="error" id="error"></div>
 
 <div class="result" id="result">
 <div class="label">Your API Key</div>
-<div class="key-box" id="api-key" onclick="copyKey()"></div>
-<div class="label">使用方式</div>
-<div style="color:#999;font-size:12px;line-height:1.6">
-设置 <code style="color:#fff">ANTHROPIC_BASE_URL</code> 为本服务地址<br>
-设置 <code style="color:#fff">ANTHROPIC_API_KEY</code> 为上方 Key
+<div class="key-box" id="api-key" onclick="copyKey()"><span class="hint">Click to copy</span></div>
+<div class="label">Usage</div>
+<div class="usage">
+Set <code>ANTHROPIC_BASE_URL</code> to your JK2API server address<br>
+Set <code>ANTHROPIC_API_KEY</code> to the key above
 </div>
 <div class="email" id="email"></div>
 </div>
@@ -53,62 +62,40 @@ GitHub 登录
 
 <script>
 let pollTimer;
-
 function startLogin(){
   document.getElementById('login-btn').style.display='none';
   document.getElementById('spinner').style.display='block';
   document.getElementById('status').style.display='block';
   document.getElementById('error').style.display='none';
-
-  fetch('/public/oauth/start',{method:'POST'})
-    .then(r=>r.json())
-    .then(d=>{
-      if(!d.login_url){throw new Error('No login URL');}
-      const popup=window.open(d.login_url,'oauth','width=600,height=700');
-      pollTimer=setInterval(()=>{
-        fetch(`/public/oauth/poll?fp=${d.fingerprint_id}&fph=${d.fingerprint_hash}&exp=${d.expires_at}`)
-          .then(r=>r.json())
-          .then(p=>{
-            if(p.done){
-              clearInterval(pollTimer);
-              if(popup)popup.close();
-              showResult(p);
-            }
-          });
-      },3000);
-      setTimeout(()=>{
-        if(pollTimer){
-          clearInterval(pollTimer);
-          showError('授权超时，请重试');
-        }
-      },600000);
-    })
-    .catch(e=>showError(e.message));
+  fetch('/public/oauth/start',{method:'POST'}).then(r=>r.json()).then(d=>{
+    if(!d.login_url)throw new Error('No login URL');
+    const popup=window.open(d.login_url,'oauth','width=600,height=700');
+    pollTimer=setInterval(()=>{
+      fetch(`/public/oauth/poll?fp=${d.fingerprint_id}&fph=${d.fingerprint_hash}&exp=${d.expires_at}`)
+        .then(r=>r.json()).then(p=>{if(p.done){clearInterval(pollTimer);if(popup)popup.close();showResult(p);}});
+    },3000);
+    setTimeout(()=>{if(pollTimer){clearInterval(pollTimer);showError('Authorization timed out');}},600000);
+  }).catch(e=>showError(e.message));
 }
-
 function showResult(p){
   document.getElementById('spinner').style.display='none';
   document.getElementById('status').style.display='none';
   document.getElementById('result').style.display='block';
-  document.getElementById('api-key').textContent=p.api_key;
+  const kb=document.getElementById('api-key');
+  kb.childNodes[0]?kb.insertBefore(document.createTextNode(p.api_key),kb.firstChild):kb.prepend(p.api_key);
   if(p.email)document.getElementById('email').textContent='Account: '+p.email;
 }
-
 function showError(msg){
   document.getElementById('spinner').style.display='none';
   document.getElementById('status').style.display='none';
   document.getElementById('login-btn').style.display='inline-flex';
-  const e=document.getElementById('error');
-  e.textContent=msg;e.style.display='block';
+  const e=document.getElementById('error');e.textContent=msg;e.style.display='block';
 }
-
 function copyKey(){
-  const key=document.getElementById('api-key').textContent;
-  navigator.clipboard.writeText(key).then(()=>{
-    const box=document.getElementById('api-key');
-    box.style.borderColor='#4f4';
-    setTimeout(()=>box.style.borderColor='#333',1000);
-  });
+  const kb=document.getElementById('api-key');
+  const text=kb.textContent.replace('Click to copy','').trim();
+  navigator.clipboard.writeText(text).then(()=>{kb.classList.add('copied');kb.querySelector('.hint').textContent='Copied!';
+    setTimeout(()=>{kb.classList.remove('copied');kb.querySelector('.hint').textContent='Click to copy';},2000);});
 }
 </script>
 </body>
