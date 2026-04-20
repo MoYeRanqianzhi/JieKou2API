@@ -93,6 +93,26 @@ h1{font-family:var(--serif);font-size:32px;font-weight:500;line-height:1.2;margi
 .copy-row-btn:hover{box-shadow:var(--surface) 0px 0px 0px 0px, var(--ring2) 0px 0px 0px 1px;color:var(--text)}
 .copy-row-btn.ok{color:var(--ok)}
 
+.config-block{
+  position:relative;text-align:left;
+  background:var(--bg);border:1px solid var(--border2);
+  border-radius:var(--radius-sm);padding:16px 20px;
+  margin:8px 0 0;font-family:var(--mono);font-size:11.5px;line-height:1.9;
+  box-shadow:var(--bg) 0px 0px 0px 0px, var(--ring) 0px 0px 0px 1px;
+  word-break:break-all;
+}
+.config-line{color:var(--text3)}
+.config-line.indent{padding-left:16px}
+.config-line.indent2{padding-left:32px}
+.ck{color:#b5695a}
+.cv{color:#2a7a5a}
+.cb{color:var(--text3)}
+@media(prefers-color-scheme:dark){
+  .ck{color:#d9967a}
+  .cv{color:#6abf8a}
+}
+.config-copy{position:absolute;top:10px;right:10px;padding:5px 10px;font-size:11px}
+
 .desc{
   color:var(--text3);font-size:13px;margin-bottom:24px;line-height:1.7;text-align:left;
   background:var(--bg);border:1px solid var(--border);
@@ -161,9 +181,14 @@ GitHub 登录
   <button class="copy-row-btn" id="copy-key-btn" onclick="copyKey()">复制</button>
 </div>
 <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;text-align:left;font-weight:500">Claude Code 配置</div>
-<div class="key-row-result">
-  <pre class="key-masked" id="result-config" style="font-size:11px;line-height:1.5;white-space:pre;overflow-x:auto"></pre>
-  <button class="copy-row-btn" id="copy-config-btn" onclick="copyConfig()">复制</button>
+<div class="config-block">
+  <div class="config-line"><span class="cb">{</span></div>
+  <div class="config-line indent"><span class="ck">"env"</span><span class="cb">: {</span></div>
+  <div class="config-line indent indent2"><span class="ck">"ANTHROPIC_AUTH_TOKEN"</span><span class="cb">:</span> <span class="cv" id="cfg-token"></span><span class="cb">,</span></div>
+  <div class="config-line indent indent2"><span class="ck">"ANTHROPIC_BASE_URL"</span><span class="cb">:</span> <span class="cv" id="cfg-url"></span></div>
+  <div class="config-line indent"><span class="cb">}</span></div>
+  <div class="config-line"><span class="cb">}</span></div>
+  <button class="copy-row-btn config-copy" id="copy-config-btn" onclick="copyConfig()">复制</button>
 </div>
 </div>
 
@@ -226,7 +251,8 @@ function copyConfig(){
     document.getElementById('step-landing').classList.add('hidden');
     document.getElementById('step-result').classList.remove('hidden');
     document.getElementById('result-key-masked').textContent=maskKey(key);
-    document.getElementById('result-config').textContent=JSON.stringify({env:{ANTHROPIC_AUTH_TOKEN:maskKey(key),ANTHROPIC_BASE_URL:location.origin}},null,2);
+    document.getElementById('cfg-token').textContent='"'+maskKey(key)+'"';
+    document.getElementById('cfg-url').textContent='"'+location.origin+'"';
     history.replaceState(null,'',location.pathname);
   }
 })();
