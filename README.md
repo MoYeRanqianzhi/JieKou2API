@@ -67,7 +67,70 @@ limits:
 | `GET /health` | 健康检查 |
 | `/admin/` | 管理面板（需 token.key） |
 | `/login.html` | 众筹登录页 |
-| `POST /public/contribute` | 贡献登录态接口 |
+| `POST /public/contribute` | 贡献登录态，返回 API Key |
+| `POST /public/donate` | 同 contribute（开发者集成用） |
+| `POST /public/upload` | 仅上传登录态，不返回 Key |
+
+## 公开 API
+
+以下接口无需认证，供开发者集成（自动注册机、批量上传等）。
+
+### POST /public/donate
+
+提交 JieKou 登录态，返回 API Key 作为奖励。
+
+**请求**（JSON 或 form-urlencoded 均可）：
+
+```bash
+# JSON
+curl -X POST https://your-domain.com/public/donate \
+  -H "Content-Type: application/json" \
+  -d '{"token": "JieKou-cookie-value", "label": "my-account"}'
+
+# Form
+curl -X POST https://your-domain.com/public/donate \
+  -d "token=JieKou-cookie-value&label=my-account"
+```
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `token` | string | 是 | JieKou 的 `token` cookie 值 |
+| `label` | string | 否 | 账号标识，留空自动生成 |
+
+**响应**：
+
+```json
+{
+  "ok": true,
+  "label": "my-account",
+  "api_key": "sk-ant-api01-xxxxxxxx"
+}
+```
+
+### POST /public/upload
+
+仅上传登录态至共享池，不发放 API Key。适用于纯捐赠场景。
+
+```bash
+curl -X POST https://your-domain.com/public/upload \
+  -H "Content-Type: application/json" \
+  -d '{"token": "JieKou-cookie-value", "label": "donated-account"}'
+```
+
+**响应**：
+
+```json
+{
+  "ok": true,
+  "label": "donated-account"
+}
+```
+
+### 获取 Token 的方法
+
+1. 登录 [jiekou.ai/user/login](https://jiekou.ai/user/login)
+2. 打开浏览器控制台（F12）
+3. 执行：`document.cookie.match(/token=([^;]+)/)?.[1]`
 
 ## 使用方式
 

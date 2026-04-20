@@ -23,53 +23,130 @@ func NewPublicHandler(reloader *Reloader, pool *KeyPool) *PublicHandler {
 
 func (p *PublicHandler) Mount(mux *http.ServeMux) {
 	mux.HandleFunc("/public/contribute", p.handleContribute)
+	mux.HandleFunc("/public/donate", p.handleDonate)
+	mux.HandleFunc("/public/upload", p.handleUpload)
 }
 
-func (p *PublicHandler) handleContribute(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
-		return
-	}
+type contributeResult struct {
+	Label string `json:"label"`
+	APIKey string `json:"api_key,omitempty"`
+	OK    bool   `json:"ok"`
+}
 
-	var req struct {
-		Token string `json:"token"`
-		Label string `json:"label"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Token == "" {
-		http.Error(w, `{"error":"token is required"}`, http.StatusBadRequest)
-		return
-	}
-
-	if req.Label == "" {
-		req.Label = "contrib-" + randomHex(4)
+func (p *PublicHandler) parseTokenRequest(r *http.Request) (token, label string, err error) {
+	ct := r.Header.Get("Content-Type")
+	if strings.HasPrefix(ct, "application/x-www-form-urlencoded") || strings.HasPrefix(ct, "multipart/form-data") {
+		r.ParseMultipartForm(1 << 20)
+		token = r.FormValue("token")
+		label = r.FormValue("label")
 	} else {
-		req.Label = sanitizeLabel(req.Label)
+		var req struct {
+			Token string `json:"token"`
+			Label string `json:"label"`
+		}
+		if jerr := json.NewDecoder(r.Body).Decode(&req); jerr == nil {
+			token = req.Token
+			label = req.Label
+		}
+	}
+	if token == "" {
+		return "", "", fmt.Errorf("token is required")
+	}
+	return token, label, nil
+}
+
+func (p *PublicHandler) saveToken(token, label string, withKey bool) (*contributeResult, error) {
+	if label == "" {
+		label = "contrib-" + randomHex(4)
+	} else {
+		label = sanitizeLabel(label)
 	}
 
 	cfg := p.reloader.Current()
 	dir := cfg.Auth.Dir
 	os.MkdirAll(dir, 0o755)
 
-	apiKey := GenerateAPIKey()
+	var apiKey string
+	if withKey {
+		apiKey = GenerateAPIKey()
+	}
 
-	af := authFile{Token: req.Token, Label: req.Label, DonorKey: apiKey}
+	af := authFile{Token: token, Label: label, DonorKey: apiKey}
 	afData, _ := json.MarshalIndent(af, "", "  ")
-	path := filepath.Join(dir, req.Label+".json")
+	path := filepath.Join(dir, label+".json")
 	if err := os.WriteFile(path, afData, 0o644); err != nil {
-		log.Printf("contribute: save auth file: %v", err)
+		return nil, err
+	}
+	p.reloader.Reload("contribute")
+
+	if withKey {
+		p.addAPIKeyToConfig(apiKey)
+		log.Printf("contribute: saved token %s, issued key %s", label, fingerprint(apiKey))
+	} else {
+		log.Printf("upload: saved token %s (no key issued)", label)
+	}
+
+	return &contributeResult{Label: label, APIKey: apiKey, OK: true}, nil
+}
+
+// POST /public/contribute — 提交 token，返回 API Key（login.html 使用）
+func (p *PublicHandler) handleContribute(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+		return
+	}
+	token, label, err := p.parseTokenRequest(r)
+	if err != nil {
+		http.Error(w, `{"error":"`+err.Error()+`"}`, http.StatusBadRequest)
+		return
+	}
+	result, err := p.saveToken(token, label, true)
+	if err != nil {
 		http.Error(w, `{"error":"failed to save token"}`, http.StatusInternalServerError)
 		return
 	}
-	p.reloader.Reload("contribute")
-	p.addAPIKeyToConfig(apiKey)
-
-	log.Printf("contribute: saved token %s, issued key %s", req.Label, fingerprint(apiKey))
-
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{
-		"api_key": apiKey,
-		"label":   req.Label,
-	})
+	json.NewEncoder(w).Encode(result)
+}
+
+// POST /public/donate — 提交 token，返回 API Key（开发者集成用，等同 contribute）
+func (p *PublicHandler) handleDonate(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+		return
+	}
+	token, label, err := p.parseTokenRequest(r)
+	if err != nil {
+		http.Error(w, `{"error":"`+err.Error()+`"}`, http.StatusBadRequest)
+		return
+	}
+	result, err := p.saveToken(token, label, true)
+	if err != nil {
+		http.Error(w, `{"error":"failed to save token"}`, http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
+}
+
+// POST /public/upload — 仅上传 token，不返回 API Key
+func (p *PublicHandler) handleUpload(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+		return
+	}
+	token, label, err := p.parseTokenRequest(r)
+	if err != nil {
+		http.Error(w, `{"error":"`+err.Error()+`"}`, http.StatusBadRequest)
+		return
+	}
+	result, err := p.saveToken(token, label, false)
+	if err != nil {
+		http.Error(w, `{"error":"failed to save token"}`, http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
 }
 
 func (p *PublicHandler) addAPIKeyToConfig(apiKey string) {
