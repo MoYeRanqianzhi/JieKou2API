@@ -1,11 +1,19 @@
 package app
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"runtime/debug"
 	"strings"
 	"time"
+)
+
+type ctxKey string
+
+const (
+	ctxKeyPassthrough    ctxKey = "passthrough"
+	ctxKeyClientToken    ctxKey = "client_token"
 )
 
 func withMiddleware(h http.Handler, reloader *Reloader) http.Handler {
@@ -15,7 +23,7 @@ func withMiddleware(h http.Handler, reloader *Reloader) http.Handler {
 func cors(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, x-api-key, anthropic-version")
 
 		if r.Method == http.MethodOptions {
@@ -35,6 +43,11 @@ func logging(next http.Handler) http.Handler {
 	})
 }
 
+// authGuard Matrix:
+//   - api_keys empty       → pass-through (no auth required)
+//   - token in api_keys    → accept, use free-trial pool
+//   - token not in api_keys → accept, mark passthrough to JieKou official API
+//   - no token             → 401
 func authGuard(next http.Handler, reloader *Reloader) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !strings.HasPrefix(r.URL.Path, "/v1/") {
@@ -68,7 +81,11 @@ func authGuard(next http.Handler, reloader *Reloader) http.Handler {
 			}
 		}
 
-		http.Error(w, `{"error":{"message":"Invalid API key","type":"authentication_error"}}`, http.StatusUnauthorized)
+		// Key not in our list → passthrough to JieKou official API with this key
+		log.Printf("auth: key %s not in api_keys, passthrough to official API", fingerprint(token))
+		ctx := context.WithValue(r.Context(), ctxKeyPassthrough, true)
+		ctx = context.WithValue(ctx, ctxKeyClientToken, token)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 

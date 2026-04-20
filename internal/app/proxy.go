@@ -176,6 +176,14 @@ func (p *ProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
+	// Passthrough: forward raw request to JieKou official OpenAI-compatible API
+	if passthrough, _ := r.Context().Value(ctxKeyPassthrough).(bool); passthrough {
+		token, _ := r.Context().Value(ctxKeyClientToken).(string)
+		log.Printf("→ passthrough (OpenAI) token=%s", fingerprint(token))
+		forwardPassthrough(w, r, body, p.client, token, "/openai/chat/completions")
+		return
+	}
+
 	var oaiReq OpenAIRequest
 	if err := json.Unmarshal(body, &oaiReq); err != nil {
 		http.Error(w, `{"error":{"message":"Invalid JSON","type":"invalid_request_error"}}`, http.StatusBadRequest)
@@ -212,6 +220,14 @@ func (p *ProxyHandler) ServeClaudeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer r.Body.Close()
+
+	// Passthrough: forward raw request to JieKou official Anthropic-compatible API
+	if passthrough, _ := r.Context().Value(ctxKeyPassthrough).(bool); passthrough {
+		token, _ := r.Context().Value(ctxKeyClientToken).(string)
+		log.Printf("→ passthrough (Claude) token=%s", fingerprint(token))
+		forwardPassthrough(w, r, body, p.client, token, "/v1/messages")
+		return
+	}
 
 	var claudeReq ClaudeRequest
 	if err := json.Unmarshal(body, &claudeReq); err != nil {
