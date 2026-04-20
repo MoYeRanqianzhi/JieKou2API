@@ -12,6 +12,7 @@ const DefaultBreakerThreshold = 3
 type KeyEntry struct {
 	Key         string
 	Label       string
+	DonorKey    string
 	Fails       int
 	Broken      bool
 	BrokenUntil time.Time
@@ -25,12 +26,12 @@ type KeyPool struct {
 	cooldown  time.Duration
 }
 
-func NewKeyPool(keys, labels []string) *KeyPool {
+func NewKeyPool(keys, labels, donorKeys []string) *KeyPool {
 	p := &KeyPool{
 		threshold: DefaultBreakerThreshold,
 		cooldown:  DefaultBreakerCooldown,
 	}
-	p.Reload(keys, labels)
+	p.Reload(keys, labels, donorKeys)
 	return p
 }
 
@@ -136,7 +137,7 @@ func (p *KeyPool) MarkSuccess(idx int) {
 	e.BrokenUntil = time.Time{}
 }
 
-func (p *KeyPool) Reload(keys, labels []string) (added, removed, kept int) {
+func (p *KeyPool) Reload(keys, labels, donorKeys []string) (added, removed, kept int) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
@@ -146,6 +147,7 @@ func (p *KeyPool) Reload(keys, labels []string) (added, removed, kept int) {
 	}
 
 	useLabels := len(labels) == len(keys)
+	useDonors := len(donorKeys) == len(keys)
 	next := make([]*KeyEntry, 0, len(keys))
 	seen := make(map[string]struct{}, len(keys))
 	for i, k := range keys {
@@ -160,12 +162,17 @@ func (p *KeyPool) Reload(keys, labels []string) (added, removed, kept int) {
 		if useLabels {
 			label = labels[i]
 		}
+		dk := ""
+		if useDonors {
+			dk = donorKeys[i]
+		}
 		if old, ok := prev[k]; ok {
 			old.Label = label
+			old.DonorKey = dk
 			next = append(next, old)
 			kept++
 		} else {
-			next = append(next, &KeyEntry{Key: k, Label: label})
+			next = append(next, &KeyEntry{Key: k, Label: label, DonorKey: dk})
 			added++
 		}
 	}

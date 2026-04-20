@@ -454,15 +454,23 @@ document.getElementById('stats-el').innerHTML=
 st(d.total,'Total','')+st(d.healthy,'Healthy','green')+st(br,'Broken',br>0?'red':'')+st(d.threshold,'Threshold','');
 const w=document.getElementById('pool-table');
 if(!d.keys||!d.keys.length){w.innerHTML='<div class="empty">暂无认证令牌</div>';return;}
-w.innerHTML='<table><thead><tr><th>#</th><th>Fingerprint</th><th>Label</th><th>Status</th><th>Fails</th><th></th></tr></thead><tbody>'+
+w.innerHTML='<table><thead><tr><th>#</th><th>Fingerprint</th><th>Label</th><th>Donor Key</th><th>Status</th><th>Fails</th><th></th></tr></thead><tbody>'+
 d.keys.map(k=>`<tr><td>${k.index}</td><td class="mono">${k.fingerprint}</td><td>${k.label}</td>
+<td class="mono">${k.donor_key?maskDK(k.donor_key):'<span style="color:var(--text3)">—</span>'}</td>
 <td><span class="dot ${k.broken?'bad':'ok'}"></span>${k.broken?'Broken':'OK'}</td><td>${k.fails}</td>
-<td style="white-space:nowrap"><button class="btn btn-sm" onclick="tripK(${k.index},${k.broken})">${k.broken?'Reset':'Trip'}</button>
+<td style="white-space:nowrap"><button class="btn btn-sm" onclick="editDonor('${k.label}','${k.donor_key||''}')">Donor</button>
+<button class="btn btn-sm" onclick="tripK(${k.index},${k.broken})">${k.broken?'Reset':'Trip'}</button>
 <button class="btn btn-sm btn-danger" onclick="delK('${k.label}')">Del</button></td></tr>`).join('')+'</tbody></table>';});}
+function maskDK(k){return k.length>16?k.substring(0,14)+'•••':k.substring(0,4)+'•••';}
 function st(v,l,c){return `<div class="stat ${c}"><div class="stat-val">${v}</div><div class="stat-lbl">${l}</div></div>`;}
 function tripK(i,b){api('/keys/'+i+'/'+(b?'reset':'trip'),{method:'POST'}).then(()=>refresh());}
 function delK(l){if(!confirm('确认删除 "'+l+'" ?'))return;api('/keys?label='+encodeURIComponent(l),{method:'DELETE'}).then(()=>{refresh();toast('已删除');});}
 function apiReload(){api('/reload',{method:'POST'}).then(()=>{refresh();toast('已刷新');});}
+function editDonor(label,cur){
+const v=prompt('设置 Donor Key（留空清除）:',cur);
+if(v===null)return;
+if(v===''){api('/keys/'+encodeURIComponent(label)+'/donor',{method:'DELETE'}).then(()=>{refresh();toast('已清除');});}
+else{api('/keys/'+encodeURIComponent(label)+'/donor',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:v})}).then(()=>{refresh();toast('已设置');});}}
 
 // Add token modal
 function showModal(id){document.getElementById(id).classList.add('show');}

@@ -152,6 +152,7 @@ func (a *AdminHandler) handleStatus(w http.ResponseWriter, r *http.Request) {
 		Index       int    `json:"index"`
 		Fingerprint string `json:"fingerprint"`
 		Label       string `json:"label"`
+		DonorKey    string `json:"donor_key,omitempty"`
 		Fails       int    `json:"fails"`
 		Broken      bool   `json:"broken"`
 		BrokenUntil string `json:"broken_until,omitempty"`
@@ -162,6 +163,7 @@ func (a *AdminHandler) handleStatus(w http.ResponseWriter, r *http.Request) {
 			Index:       i,
 			Fingerprint: fingerprint(e.Key),
 			Label:       e.Label,
+			DonorKey:    e.DonorKey,
 			Fails:       e.Fails,
 			Broken:      e.Broken,
 		}
@@ -276,13 +278,20 @@ func (a *AdminHandler) handleKeys(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *AdminHandler) handleKeyAction(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
 	parts := strings.Split(strings.TrimPrefix(r.URL.Path, "/admin/api/keys/"), "/")
 	if len(parts) < 2 {
 		http.Error(w, `{"error":"invalid path"}`, http.StatusBadRequest)
+		return
+	}
+	action := parts[1]
+
+	if action == "donor" {
+		a.handleDonor(w, r, parts[0])
+		return
+	}
+
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 	idx, err := strconv.Atoi(parts[0])
@@ -290,7 +299,6 @@ func (a *AdminHandler) handleKeyAction(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, `{"error":"invalid index"}`, http.StatusBadRequest)
 		return
 	}
-	action := parts[1]
 	switch action {
 	case "trip":
 		a.pool.MarkFailure(idx)
@@ -304,6 +312,53 @@ func (a *AdminHandler) handleKeyAction(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.Write([]byte(`{"ok":true}`))
+}
+
+func (a *AdminHandler) handleDonor(w http.ResponseWriter, r *http.Request, label string) {
+	cfg := a.reloader.Current()
+	path := filepath.Join(cfg.Auth.Dir, sanitizeLabel(label)+".json")
+
+	switch r.Method {
+	case http.MethodPost:
+		var req struct {
+			Key string `json:"key"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, `{"error":"invalid JSON"}`, http.StatusBadRequest)
+			return
+		}
+		if err := a.updateAuthFileDonorKey(path, req.Key); err != nil {
+			http.Error(w, `{"error":"failed to update"}`, http.StatusInternalServerError)
+			return
+		}
+		a.reloader.Reload("admin-set-donor")
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{"ok":true}`))
+	case http.MethodDelete:
+		if err := a.updateAuthFileDonorKey(path, ""); err != nil {
+			http.Error(w, `{"error":"failed to update"}`, http.StatusInternalServerError)
+			return
+		}
+		a.reloader.Reload("admin-clear-donor")
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{"ok":true}`))
+	default:
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func (a *AdminHandler) updateAuthFileDonorKey(path, donorKey string) error {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	var af authFile
+	if err := json.Unmarshal(data, &af); err != nil {
+		return err
+	}
+	af.DonorKey = donorKey
+	out, _ := json.MarshalIndent(af, "", "  ")
+	return os.WriteFile(path, out, 0o644)
 }
 
 func (a *AdminHandler) handleReload(w http.ResponseWriter, r *http.Request) {

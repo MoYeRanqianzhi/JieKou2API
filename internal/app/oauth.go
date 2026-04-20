@@ -50,7 +50,9 @@ func (p *PublicHandler) handleContribute(w http.ResponseWriter, r *http.Request)
 	dir := cfg.Auth.Dir
 	os.MkdirAll(dir, 0o755)
 
-	af := authFile{Token: req.Token, Label: req.Label}
+	apiKey := GenerateAPIKey()
+
+	af := authFile{Token: req.Token, Label: req.Label, DonorKey: apiKey}
 	afData, _ := json.MarshalIndent(af, "", "  ")
 	path := filepath.Join(dir, req.Label+".json")
 	if err := os.WriteFile(path, afData, 0o644); err != nil {
@@ -59,8 +61,6 @@ func (p *PublicHandler) handleContribute(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	p.reloader.Reload("contribute")
-
-	apiKey := GenerateAPIKey()
 	p.addAPIKeyToConfig(apiKey)
 
 	log.Printf("contribute: saved token %s, issued key %s", req.Label, fingerprint(apiKey))

@@ -16,17 +16,18 @@ import (
 )
 
 type authFile struct {
-	Token string `json:"token"`
-	Label string `json:"label"`
+	Token    string `json:"token"`
+	Label    string `json:"label"`
+	DonorKey string `json:"donor_key,omitempty"`
 }
 
-func LoadAuthsDir(dir string) (keys, labels []string, err error) {
+func LoadAuthsDir(dir string) (keys, labels, donorKeys []string, err error) {
 	if dir == "" {
-		return nil, nil, nil
+		return nil, nil, nil, nil
 	}
 	entries, err := os.ReadDir(dir)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	names := make([]string, 0, len(entries))
 	for _, e := range entries {
@@ -59,8 +60,9 @@ func LoadAuthsDir(dir string) (keys, labels []string, err error) {
 		}
 		keys = append(keys, tok)
 		labels = append(labels, label)
+		donorKeys = append(donorKeys, strings.TrimSpace(af.DonorKey))
 	}
-	return keys, labels, nil
+	return keys, labels, donorKeys, nil
 }
 
 const DefaultAdminTokenPath = "token.key"
@@ -118,12 +120,12 @@ func (r *Reloader) Reload(reason string) {
 		return
 	}
 
-	keys, labels, err := LoadAuthsDir(next.Auth.Dir)
+	keys, labels, donorKeys, err := LoadAuthsDir(next.Auth.Dir)
 	if err != nil {
 		log.Printf("reload (%s): key load failed — keeping previous pool: %v", reason, err)
 	} else {
 		r.pool.SetBreakerTuning(next.Auth.Breaker.Threshold, next.Auth.Breaker.Cooldown)
-		added, removed, kept := r.pool.Reload(keys, labels)
+		added, removed, kept := r.pool.Reload(keys, labels, donorKeys)
 		log.Printf("reload (%s): keys added=%d removed=%d kept=%d total=%d healthy=%d",
 			reason, added, removed, kept, r.pool.Size(), r.pool.HealthySize())
 	}

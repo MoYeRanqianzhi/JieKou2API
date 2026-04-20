@@ -28,7 +28,7 @@ func Run(assets embed.FS) {
 		log.Fatalf("config error: %v", err)
 	}
 
-	keys, labels, err := LoadAuthsDir(cfg.Auth.Dir)
+	keys, labels, donorKeys, err := LoadAuthsDir(cfg.Auth.Dir)
 	if err != nil {
 		log.Printf("WARNING: failed to load auths dir: %v", err)
 	}
@@ -36,7 +36,7 @@ func Run(assets embed.FS) {
 		log.Printf("WARNING: no auth tokens found — /v1/* will 503 until tokens are added to %s/", cfg.Auth.Dir)
 	}
 
-	pool := NewKeyPool(keys, labels)
+	pool := NewKeyPool(keys, labels, donorKeys)
 	pool.SetBreakerTuning(cfg.Auth.Breaker.Threshold, cfg.Auth.Breaker.Cooldown)
 
 	reloader := NewReloader(*configPath, cfg, pool)
