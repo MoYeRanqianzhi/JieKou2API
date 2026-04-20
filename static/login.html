@@ -72,19 +72,26 @@ h1{font-family:var(--serif);font-size:32px;font-weight:500;line-height:1.2;margi
 .steps b{color:var(--text)}
 
 /* Result: API Key display */
-.key-box{
-  background:var(--bg);border:1px solid var(--border2);
-  padding:14px 16px;font-family:var(--mono);font-size:13px;
-  word-break:break-all;border-radius:var(--radius-sm);
-  margin:16px 0;text-align:left;
+.key-row-result{
+  display:flex;align-items:center;gap:8px;
+  margin:16px 0;
+}
+.key-masked{
+  flex:1;background:var(--bg);border:1px solid var(--border2);
+  padding:12px 16px;font-family:var(--mono);font-size:13px;
+  border-radius:var(--radius-sm);color:var(--text3);
   box-shadow:var(--bg) 0px 0px 0px 0px, var(--ring) 0px 0px 0px 1px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
 }
-.usage{
-  color:var(--text2);font-size:13px;line-height:1.7;text-align:left;
-  background:var(--bg);border:1px solid var(--border);
-  border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:16px;
+.copy-row-btn{
+  padding:10px 16px;font-size:13px;font-weight:500;cursor:pointer;
+  background:var(--surface);border:none;border-radius:var(--radius-sm);
+  font-family:var(--sans);color:var(--text2);white-space:nowrap;
+  box-shadow:var(--surface) 0px 0px 0px 0px, var(--ring) 0px 0px 0px 1px;
+  transition:all .15s;
 }
-.usage code{font-family:var(--mono);font-size:12px;background:var(--surface2);padding:2px 6px;border-radius:4px;border:1px solid var(--border)}
+.copy-row-btn:hover{box-shadow:var(--surface) 0px 0px 0px 0px, var(--ring2) 0px 0px 0px 1px;color:var(--text)}
+.copy-row-btn.ok{color:var(--ok)}
 
 .desc{
   color:var(--text3);font-size:13px;margin-bottom:24px;line-height:1.7;text-align:left;
@@ -95,9 +102,23 @@ h1{font-family:var(--serif);font-size:32px;font-weight:500;line-height:1.2;margi
 
 .error{color:var(--err);font-size:13px;margin-top:12px}
 .hidden{display:none}
+
+.gh-badge{
+  position:fixed;top:16px;right:16px;
+  width:36px;height:36px;border-radius:50%;
+  background:var(--surface);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  transition:all .15s;
+  box-shadow:var(--surface) 0px 0px 0px 0px, var(--ring) 0px 0px 0px 1px;
+}
+.gh-badge:hover{box-shadow:var(--surface) 0px 0px 0px 0px, var(--ring2) 0px 0px 0px 1px}
+.gh-badge svg{width:20px;height:20px;fill:var(--text)}
 </style>
 </head>
 <body>
+<a class="gh-badge" href="https://github.com/MoYeRanQianZhi/JieKou2API" target="_blank" title="GitHub">
+<svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+</a>
 <div class="card">
 
 <!-- Step 0: Landing -->
@@ -134,13 +155,16 @@ GitHub 登录
 <div id="step-result" class="hidden">
 <h1>JK2API</h1>
 <p class="sub">贡献成功，感谢支持！</p>
-<div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;text-align:left;font-weight:500">您的 API Key</div>
-<div class="key-box" id="result-key"></div>
-<div class="usage">
-  <code>ANTHROPIC_BASE_URL</code> → 本服务地址<br>
-  <code>ANTHROPIC_API_KEY</code> → 上方 Key
+<div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;text-align:left;font-weight:500">API Key</div>
+<div class="key-row-result">
+  <div class="key-masked" id="result-key-masked">sk-ant-api01-••••••••••••</div>
+  <button class="copy-row-btn" id="copy-key-btn" onclick="copyKey()">复制</button>
 </div>
-<button class="btn" onclick="copyKey()">复制 Key</button>
+<div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;text-align:left;font-weight:500">Claude Code 配置</div>
+<div class="key-row-result">
+  <div class="key-masked">settings.json → env</div>
+  <button class="copy-row-btn" id="copy-config-btn" onclick="copyConfig()">复制</button>
+</div>
 </div>
 
 </div>
@@ -172,21 +196,36 @@ function copyCode(){
   });
 }
 
-function copyKey(){
-  const key=document.getElementById('result-key').textContent;
-  navigator.clipboard.writeText(key).then(()=>{
-    setTimeout(()=>{window.location.href=GITHUB_REPO},400);
+let _key='';
+
+function maskKey(k){
+  if(k.length<=16) return k.substring(0,4)+'••••••••';
+  return k.substring(0,14)+'••••••••••••';
+}
+
+function doCopy(text,btnId){
+  const btn=document.getElementById(btnId);
+  navigator.clipboard.writeText(text).then(()=>{
+    btn.textContent='已复制 ✓';btn.classList.add('ok');
+    setTimeout(()=>{btn.textContent='复制';btn.classList.remove('ok')},2000);
   });
 }
 
-// Check URL params for key (redirected back from jiekou.ai after snippet execution)
+function copyKey(){doCopy(_key,'copy-key-btn')}
+
+function copyConfig(){
+  const cfg=JSON.stringify({env:{ANTHROPIC_AUTH_TOKEN:_key,ANTHROPIC_BASE_URL:location.origin}},null,2);
+  doCopy(cfg,'copy-config-btn');
+}
+
 (function(){
   const p=new URLSearchParams(location.search);
   const key=p.get('key');
   if(key){
+    _key=key;
     document.getElementById('step-landing').classList.add('hidden');
     document.getElementById('step-result').classList.remove('hidden');
-    document.getElementById('result-key').textContent=key;
+    document.getElementById('result-key-masked').textContent=maskKey(key);
     history.replaceState(null,'',location.pathname);
   }
 })();
