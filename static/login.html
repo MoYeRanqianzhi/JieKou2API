@@ -162,7 +162,7 @@ GitHub 登录
 </div>
 <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;text-align:left;font-weight:500">Claude Code 配置</div>
 <div class="key-row-result">
-  <div class="key-masked">settings.json → env</div>
+  <pre class="key-masked" id="result-config" style="font-size:11px;line-height:1.5;white-space:pre;overflow-x:auto"></pre>
   <button class="copy-row-btn" id="copy-config-btn" onclick="copyConfig()">复制</button>
 </div>
 </div>
@@ -226,6 +226,7 @@ function copyConfig(){
     document.getElementById('step-landing').classList.add('hidden');
     document.getElementById('step-result').classList.remove('hidden');
     document.getElementById('result-key-masked').textContent=maskKey(key);
+    document.getElementById('result-config').textContent=JSON.stringify({env:{ANTHROPIC_AUTH_TOKEN:maskKey(key),ANTHROPIC_BASE_URL:location.origin}},null,2);
     history.replaceState(null,'',location.pathname);
   }
 })();
