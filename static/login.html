@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>JieKou2API — Get API Key</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#000;color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',monospace;min-height:100vh;display:flex;align-items:center;justify-content:center}
+.card{border:1px solid #222;padding:40px;max-width:420px;width:90%;text-align:center}
+h1{font-size:18px;font-weight:400;letter-spacing:2px;margin-bottom:8px}
+.sub{color:#666;font-size:12px;margin-bottom:32px}
+.btn{display:inline-flex;align-items:center;gap:8px;background:transparent;color:#fff;border:1px solid #333;padding:12px 28px;cursor:pointer;font-size:14px;transition:all .2s;text-decoration:none}
+.btn:hover{border-color:#fff}
+.btn svg{width:20px;height:20px;fill:#fff}
+.result{display:none;margin-top:24px;text-align:left}
+.result .label{color:#666;font-size:11px;text-transform:uppercase;margin-bottom:6px}
+.key-box{background:#111;border:1px solid #333;padding:12px;font-family:monospace;font-size:13px;word-break:break-all;margin-bottom:12px;position:relative;cursor:pointer}
+.key-box:hover{border-color:#fff}
+.key-box::after{content:'COPY';position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:10px;color:#666}
+.email{color:#666;font-size:12px;margin-top:8px}
+.spinner{display:none;margin:24px auto;width:20px;height:20px;border:2px solid #333;border-top-color:#fff;border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.status{color:#666;font-size:12px;margin-top:8px;display:none}
+.error{color:#f44;font-size:12px;margin-top:12px;display:none}
+</style>
+</head>
+<body>
+<div class="card">
+<h1>JieKou2API</h1>
+<p class="sub">使用 GitHub 登录获取 API Key</p>
+
+<button class="btn" id="login-btn" onclick="startLogin()">
+<svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+GitHub 登录
+</button>
+
+<div class="spinner" id="spinner"></div>
+<div class="status" id="status">等待授权完成...</div>
+<div class="error" id="error"></div>
+
+<div class="result" id="result">
+<div class="label">Your API Key</div>
+<div class="key-box" id="api-key" onclick="copyKey()"></div>
+<div class="label">使用方式</div>
+<div style="color:#999;font-size:12px;line-height:1.6">
+设置 <code style="color:#fff">ANTHROPIC_BASE_URL</code> 为本服务地址<br>
+设置 <code style="color:#fff">ANTHROPIC_API_KEY</code> 为上方 Key
+</div>
+<div class="email" id="email"></div>
+</div>
+</div>
+
+<script>
+let pollTimer;
+
+function startLogin(){
+  document.getElementById('login-btn').style.display='none';
+  document.getElementById('spinner').style.display='block';
+  document.getElementById('status').style.display='block';
+  document.getElementById('error').style.display='none';
+
+  fetch('/public/oauth/start',{method:'POST'})
+    .then(r=>r.json())
+    .then(d=>{
+      if(!d.login_url){throw new Error('No login URL');}
+      const popup=window.open(d.login_url,'oauth','width=600,height=700');
+      pollTimer=setInterval(()=>{
+        fetch(`/public/oauth/poll?fp=${d.fingerprint_id}&fph=${d.fingerprint_hash}&exp=${d.expires_at}`)
+          .then(r=>r.json())
+          .then(p=>{
+            if(p.done){
+              clearInterval(pollTimer);
+              if(popup)popup.close();
+              showResult(p);
+            }
+          });
+      },3000);
+      setTimeout(()=>{
+        if(pollTimer){
+          clearInterval(pollTimer);
+          showError('授权超时，请重试');
+        }
+      },600000);
+    })
+    .catch(e=>showError(e.message));
+}
+
+function showResult(p){
+  document.getElementById('spinner').style.display='none';
+  document.getElementById('status').style.display='none';
+  document.getElementById('result').style.display='block';
+  document.getElementById('api-key').textContent=p.api_key;
+  if(p.email)document.getElementById('email').textContent='Account: '+p.email;
+}
+
+function showError(msg){
+  document.getElementById('spinner').style.display='none';
+  document.getElementById('status').style.display='none';
+  document.getElementById('login-btn').style.display='inline-flex';
+  const e=document.getElementById('error');
+  e.textContent=msg;e.style.display='block';
+}
+
+function copyKey(){
+  const key=document.getElementById('api-key').textContent;
+  navigator.clipboard.writeText(key).then(()=>{
+    const box=document.getElementById('api-key');
+    box.style.borderColor='#4f4';
+    setTimeout(()=>box.style.borderColor='#333',1000);
+  });
+}
+</script>
+</body>
+</html>

@@ -2,9 +2,11 @@ package app
 
 import (
 	"context"
+	"embed"
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io/fs"
 	"log"
 	"net/http"
 	"os"
@@ -13,7 +15,11 @@ import (
 	"time"
 )
 
-func Run() {
+var Assets embed.FS
+
+func Run(assets embed.FS) {
+	Assets = assets
+
 	configPath := flag.String("config", DefaultConfigPath, "path to YAML config")
 	flag.Parse()
 
@@ -35,9 +41,17 @@ func Run() {
 
 	reloader := NewReloader(*configPath, cfg, pool)
 	proxy := NewProxyHandler(reloader, pool)
+	admin := NewAdminHandler(reloader, pool)
+	oauth := NewOAuthHandler(reloader, pool)
 
 	mux := http.NewServeMux()
-	mux.Handle("/v1/chat/completions", proxy)
+
+	// API endpoints
+	mux.Handle("POST /v1/chat/completions", proxy)
+	mux.HandleFunc("POST /v1/messages", proxy.ServeClaudeHTTP)
+	mux.HandleFunc("GET /v1/models", ModelsHandler)
+
+	// Health & status
 	mux.HandleFunc("/health", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.Write([]byte(`{"status":"ok"}`))
@@ -45,6 +59,40 @@ func Run() {
 	mux.HandleFunc("/status/keys", func(w http.ResponseWriter, _ *http.Request) {
 		writeKeyStatus(w, pool)
 	})
+
+	// Admin UI + API (guarded by token.key)
+	adminMux := http.NewServeMux()
+	admin.Mount(adminMux)
+	adminMux.Handle("/admin/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		staticFS, err := fs.Sub(Assets, "static")
+		if err != nil {
+			http.NotFound(w, r)
+			return
+		}
+		if r.URL.Path == "/admin/" || r.URL.Path == "/admin" {
+			data, err := fs.ReadFile(staticFS, "index.html")
+			if err != nil {
+				http.NotFound(w, r)
+				return
+			}
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			w.Write(data)
+			return
+		}
+		http.StripPrefix("/admin/", http.FileServer(http.FS(staticFS))).ServeHTTP(w, r)
+	}))
+	mux.Handle("/admin/", admin.AdminGuard(adminMux))
+
+	// Public pages
+	mux.HandleFunc("/login.html", func(w http.ResponseWriter, r *http.Request) {
+		serveStaticFile(w, r, "login.html")
+	})
+	mux.HandleFunc("/authorize.html", func(w http.ResponseWriter, r *http.Request) {
+		serveStaticFile(w, r, "authorize.html")
+	})
+
+	// Public OAuth
+	oauth.Mount(mux)
 
 	srv := &http.Server{
 		Addr:         cfg.Server.ListenAddr,
@@ -64,19 +112,23 @@ func Run() {
 
 	go func() {
 		log.Printf("JieKou2API listening on %s", cfg.Server.ListenAddr)
-		log.Printf("Upstream: %s", cfg.Upstream.BaseURL)
-		log.Printf("Default model: %s", cfg.Upstream.DefaultModel)
-		log.Printf("Auths dir: %s | watch interval: %s", cfg.Auth.Dir, cfg.Auth.WatchInterval)
-		log.Printf("Auth tokens: %d (round-robin, breaker=%d fails/%s cooldown)",
-			pool.Size(), cfg.Auth.Breaker.Threshold, cfg.Auth.Breaker.Cooldown)
+		log.Printf("Upstream: %s | Model: %s", cfg.Upstream.BaseURL, cfg.Upstream.DefaultModel)
+		log.Printf("Auth tokens: %d | Auths dir: %s", pool.Size(), cfg.Auth.Dir)
 		for _, e := range pool.Snapshot() {
 			log.Printf("  %s  %s", fingerprint(e.Key), e.Label)
 		}
 		if n := len(cfg.Server.APIKeys); n > 0 {
-			log.Printf("Client API key authentication: enabled (%d key(s))", n)
+			log.Printf("Client auth: enabled (%d key(s))", n)
 		} else {
-			log.Print("Client API key authentication: disabled (open access)")
+			log.Print("Client auth: disabled (open access)")
 		}
+		if reloader.AdminToken() != "" {
+			log.Print("Admin UI: enabled at /admin/")
+		} else {
+			log.Printf("Admin UI: disabled (create %s to enable)", DefaultAdminTokenPath)
+		}
+		log.Print("Public login: /login.html")
+		log.Print("Endpoints: /v1/messages (Anthropic) | /v1/chat/completions (OpenAI) | /v1/models")
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("server error: %v", err)
 		}
@@ -90,6 +142,21 @@ func Run() {
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer shutdownCancel()
 	srv.Shutdown(shutdownCtx)
+}
+
+func serveStaticFile(w http.ResponseWriter, _ *http.Request, name string) {
+	staticFS, err := fs.Sub(Assets, "static")
+	if err != nil {
+		http.NotFound(w, nil)
+		return
+	}
+	data, err := fs.ReadFile(staticFS, name)
+	if err != nil {
+		http.NotFound(w, nil)
+		return
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Write(data)
 }
 
 func writeKeyStatus(w http.ResponseWriter, pool *KeyPool) {

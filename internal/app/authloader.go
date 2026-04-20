@@ -63,25 +63,49 @@ func LoadAuthsDir(dir string) (keys, labels []string, err error) {
 	return keys, labels, nil
 }
 
+const DefaultAdminTokenPath = "token.key"
+
 type Reloader struct {
 	configPath string
+	tokenPath  string
 	pool       *KeyPool
 	mu         sync.RWMutex
 	current    *Config
+	adminToken string
 }
 
 func NewReloader(configPath string, initial *Config, pool *KeyPool) *Reloader {
-	return &Reloader{
+	r := &Reloader{
 		configPath: configPath,
+		tokenPath:  DefaultAdminTokenPath,
 		pool:       pool,
 		current:    initial,
 	}
+	r.adminToken = readAdminToken(r.tokenPath)
+	return r
 }
 
 func (r *Reloader) Current() *Config {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	return r.current
+}
+
+func (r *Reloader) AdminToken() string {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return r.adminToken
+}
+
+func readAdminToken(path string) string {
+	if path == "" {
+		return ""
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(string(data))
 }
 
 func (r *Reloader) Reload(reason string) {
@@ -104,6 +128,7 @@ func (r *Reloader) Reload(reason string) {
 			reason, added, removed, kept, r.pool.Size(), r.pool.HealthySize())
 	}
 	r.current = next
+	r.adminToken = readAdminToken(r.tokenPath)
 }
 
 type Watcher struct {

@@ -16,7 +16,7 @@ func cors(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, x-api-key, anthropic-version")
 
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusNoContent)
@@ -49,14 +49,15 @@ func authGuard(next http.Handler, reloader *Reloader) http.Handler {
 			return
 		}
 
-		auth := r.Header.Get("Authorization")
 		token := ""
-		if strings.HasPrefix(auth, "Bearer ") {
+		if xKey := r.Header.Get("x-api-key"); xKey != "" {
+			token = xKey
+		} else if auth := r.Header.Get("Authorization"); strings.HasPrefix(auth, "Bearer ") {
 			token = strings.TrimPrefix(auth, "Bearer ")
 		}
 
 		if token == "" {
-			http.Error(w, `{"error":{"message":"Missing API key","type":"authentication_error"}}`, http.StatusUnauthorized)
+			http.Error(w, `{"error":{"type":"authentication_error","message":"Missing API key"}}`, http.StatusUnauthorized)
 			return
 		}
 

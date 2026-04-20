@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>JieKou2API Admin</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#000;color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',monospace;min-height:100vh}
+.container{max-width:960px;margin:0 auto;padding:24px}
+h1{font-size:20px;font-weight:400;letter-spacing:2px;margin-bottom:24px;border-bottom:1px solid #333;padding-bottom:12px}
+h1 span{color:#666;font-size:12px;margin-left:8px}
+.tabs{display:flex;gap:0;margin-bottom:24px;border-bottom:1px solid #333}
+.tab{padding:8px 20px;cursor:pointer;color:#666;font-size:13px;border-bottom:2px solid transparent;transition:all .2s}
+.tab.active{color:#fff;border-bottom-color:#fff}
+.tab:hover{color:#aaa}
+.panel{display:none}
+.panel.active{display:block}
+.card{border:1px solid #222;padding:16px;margin-bottom:16px}
+.card-title{font-size:13px;color:#666;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.stat{border:1px solid #222;padding:16px;text-align:center}
+.stat-value{font-size:28px;font-weight:300}
+.stat-label{font-size:11px;color:#666;margin-top:4px;text-transform:uppercase}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px;color:#666;font-weight:400;border-bottom:1px solid #222;font-size:11px;text-transform:uppercase}
+td{padding:8px;border-bottom:1px solid #111}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+.dot.ok{background:#4f4}
+.dot.broken{background:#f44}
+.btn{background:transparent;color:#fff;border:1px solid #333;padding:6px 14px;cursor:pointer;font-size:12px;transition:all .2s}
+.btn:hover{border-color:#fff}
+.btn-sm{padding:3px 8px;font-size:11px}
+.btn-danger{border-color:#600}
+.btn-danger:hover{border-color:#f44;color:#f44}
+.login-bar{display:flex;gap:8px;margin-bottom:24px}
+.login-bar input{flex:1;background:#111;border:1px solid #333;color:#fff;padding:8px;font-size:13px}
+.login-bar input:focus{outline:none;border-color:#fff}
+textarea{width:100%;background:#111;color:#fff;border:1px solid #333;padding:12px;font-family:monospace;font-size:13px;min-height:300px;resize:vertical}
+textarea:focus{outline:none;border-color:#fff}
+.actions{display:flex;gap:8px;margin-top:12px}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:100;align-items:center;justify-content:center}
+.modal.show{display:flex}
+.modal-content{background:#111;border:1px solid #333;padding:24px;max-width:400px;width:90%}
+.modal-content h3{font-size:14px;font-weight:400;margin-bottom:16px}
+.modal-content input{width:100%;background:#000;border:1px solid #333;color:#fff;padding:8px;font-size:13px;margin-bottom:8px}
+.modal-content input:focus{outline:none;border-color:#fff}
+.toast{position:fixed;bottom:24px;right:24px;background:#111;border:1px solid #333;padding:12px 20px;font-size:13px;z-index:200;display:none}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>JieKou2API <span>Admin</span></h1>
+
+<div id="auth-section">
+<div class="login-bar">
+<input type="password" id="token-input" placeholder="Admin Token">
+<button class="btn" onclick="login()">Login</button>
+</div>
+</div>
+
+<div id="main-section" style="display:none">
+<div class="tabs">
+<div class="tab active" onclick="switchTab('dashboard')">Dashboard</div>
+<div class="tab" onclick="switchTab('config')">Config</div>
+</div>
+
+<div id="dashboard" class="panel active">
+<div class="stats" id="stats"></div>
+<div class="card">
+<div class="card-title">Key Pool</div>
+<div style="display:flex;gap:8px;margin-bottom:12px">
+<button class="btn btn-sm" onclick="showAddKey()">+ Add Key</button>
+<button class="btn btn-sm" onclick="reload()">Reload</button>
+</div>
+<table>
+<thead><tr><th>#</th><th>Fingerprint</th><th>Label</th><th>Status</th><th>Fails</th><th>Actions</th></tr></thead>
+<tbody id="key-table"></tbody>
+</table>
+</div>
+</div>
+
+<div id="config" class="panel">
+<div class="card">
+<div class="card-title">config.yaml</div>
+<textarea id="config-editor"></textarea>
+<div class="actions">
+<button class="btn" onclick="saveConfig()">Save & Reload</button>
+<button class="btn" onclick="loadConfig()">Discard</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="modal" id="add-key-modal">
+<div class="modal-content">
+<h3>Add Key</h3>
+<input id="new-label" placeholder="Label">
+<input id="new-token" placeholder="Token (cookie value)">
+<div class="actions">
+<button class="btn" onclick="addKey()">Add</button>
+<button class="btn" onclick="closeModal()">Cancel</button>
+</div>
+</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let adminToken='';
+const API='/admin/api';
+
+function login(){
+  adminToken=document.getElementById('token-input').value;
+  if(!adminToken)return;
+  localStorage.setItem('jk2api_token',adminToken);
+  fetch(API+'/status',{headers:{'Authorization':'Bearer '+adminToken}})
+    .then(r=>{if(!r.ok)throw r;return r.json()})
+    .then(()=>{
+      document.getElementById('auth-section').style.display='none';
+      document.getElementById('main-section').style.display='block';
+      refresh();loadConfig();
+    })
+    .catch(()=>toast('Invalid token'));
+}
+
+function api(path,opts={}){
+  opts.headers={...opts.headers,'Authorization':'Bearer '+adminToken};
+  return fetch(API+path,opts).then(r=>{
+    if(r.status===401){localStorage.removeItem('jk2api_token');location.reload();}
+    return r;
+  });
+}
+
+function refresh(){
+  api('/status').then(r=>r.json()).then(d=>{
+    document.getElementById('stats').innerHTML=
+      stat(d.total,'Total')+stat(d.healthy,'Healthy')+stat(d.total-d.healthy,'Broken')+stat(d.threshold,'Threshold');
+    const tb=document.getElementById('key-table');
+    tb.innerHTML=d.keys.map((k,i)=>`<tr>
+      <td>${k.index}</td>
+      <td style="font-family:monospace;font-size:12px">${k.fingerprint}</td>
+      <td>${k.label}</td>
+      <td><span class="dot ${k.broken?'broken':'ok'}"></span>${k.broken?'Broken':'OK'}</td>
+      <td>${k.fails}</td>
+      <td>
+        <button class="btn btn-sm" onclick="tripKey(${k.index})">${k.broken?'Reset':'Trip'}</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteKey('${k.label}')">Del</button>
+      </td>
+    </tr>`).join('');
+  });
+}
+
+function stat(v,l){return `<div class="stat"><div class="stat-value">${v}</div><div class="stat-label">${l}</div></div>`;}
+
+function switchTab(id){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+function loadConfig(){
+  api('/config').then(r=>r.text()).then(t=>document.getElementById('config-editor').value=t);
+}
+
+function saveConfig(){
+  api('/config',{method:'PUT',body:document.getElementById('config-editor').value})
+    .then(r=>r.json()).then(()=>{toast('Config saved');refresh();});
+}
+
+function showAddKey(){document.getElementById('add-key-modal').classList.add('show');}
+function closeModal(){document.querySelectorAll('.modal').forEach(m=>m.classList.remove('show'));}
+
+function addKey(){
+  const label=document.getElementById('new-label').value;
+  const token=document.getElementById('new-token').value;
+  if(!token){toast('Token required');return;}
+  api('/keys',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token,label})})
+    .then(r=>r.json()).then(()=>{closeModal();refresh();toast('Key added');});
+}
+
+function deleteKey(label){
+  if(!confirm('Delete '+label+'?'))return;
+  api('/keys?label='+encodeURIComponent(label),{method:'DELETE'})
+    .then(r=>r.json()).then(()=>{refresh();toast('Key deleted');});
+}
+
+function tripKey(idx){
+  const snap=document.querySelectorAll('#key-table tr')[idx];
+  const isBroken=snap?.querySelector('.dot')?.classList.contains('broken');
+  api('/keys/'+idx+'/'+(isBroken?'reset':'trip'),{method:'POST'})
+    .then(r=>r.json()).then(()=>refresh());
+}
+
+function reload(){
+  api('/reload',{method:'POST'}).then(r=>r.json()).then(()=>{refresh();toast('Reloaded');});
+}
+
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.style.display='block';
+  setTimeout(()=>t.style.display='none',2000);
+}
+
+// Auto-login from localStorage
+(function(){
+  const saved=localStorage.getItem('jk2api_token');
+  if(saved){document.getElementById('token-input').value=saved;login();}
+})();
+</script>
+</body>
+</html>

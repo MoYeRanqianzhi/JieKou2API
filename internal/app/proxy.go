@@ -40,31 +40,11 @@ func NewProxyHandler(reloader *Reloader, pool *KeyPool) *ProxyHandler {
 	}
 }
 
-func (p *ProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, `{"error":{"message":"Method not allowed","type":"invalid_request_error"}}`, http.StatusMethodNotAllowed)
-		return
-	}
+type streamHandler func(w http.ResponseWriter, resp *http.Response, model string)
+type errorWriter func(w http.ResponseWriter, status int, msg string)
 
+func (p *ProxyHandler) forwardToUpstream(w http.ResponseWriter, r *http.Request, jkReq *JieKouRequest, model string, isStream bool, onStream, onNonStream streamHandler, onError errorWriter) {
 	cfg := p.reloader.Current()
-
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		http.Error(w, `{"error":{"message":"Failed to read request body","type":"invalid_request_error"}}`, http.StatusBadRequest)
-		return
-	}
-	defer r.Body.Close()
-
-	var oaiReq OpenAIRequest
-	if err := json.Unmarshal(body, &oaiReq); err != nil {
-		http.Error(w, `{"error":{"message":"Invalid JSON","type":"invalid_request_error"}}`, http.StatusBadRequest)
-		return
-	}
-
-	isStream := oaiReq.Stream != nil && *oaiReq.Stream
-
-	jkReq := ConvertRequest(&oaiReq, cfg.Upstream.DefaultModel)
-	model := jkReq.Model
 
 	const maxRetriesCap = 3
 	healthy := p.keys.HealthySize()
@@ -89,14 +69,14 @@ func (p *ProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		jkBody, err := json.Marshal(jkReq)
 		if err != nil {
-			http.Error(w, `{"error":{"message":"Failed to encode request","type":"server_error"}}`, http.StatusInternalServerError)
+			onError(w, http.StatusInternalServerError, "Failed to encode request")
 			return
 		}
 
 		targetURL := cfg.Upstream.BaseURL + "/api/free-trial/chat"
 		upstream, err := http.NewRequestWithContext(r.Context(), http.MethodPost, targetURL, bytes.NewReader(jkBody))
 		if err != nil {
-			http.Error(w, `{"error":{"message":"Failed to create upstream request","type":"server_error"}}`, http.StatusInternalServerError)
+			onError(w, http.StatusInternalServerError, "Failed to create upstream request")
 			return
 		}
 		upstream.Header.Set("Content-Type", "application/json")
@@ -128,15 +108,15 @@ func (p *ProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		if resp.StatusCode == http.StatusBadRequest {
 			resp.Body.Close()
-			http.Error(w, `{"error":{"message":"请求被上游拒绝","type":"invalid_request"}}`, http.StatusBadRequest)
+			onError(w, http.StatusBadRequest, "请求被上游拒绝")
 			return
 		}
 
 		if resp.StatusCode == http.StatusOK {
 			if isStream {
-				handleStreamResponse(w, resp, model)
+				onStream(w, resp, model)
 			} else {
-				handleNonStreamResponse(w, resp, model)
+				onNonStream(w, resp, model)
 			}
 			resp.Body.Close()
 			return
@@ -148,21 +128,19 @@ func (p *ProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if len(tried) == 0 {
 		if p.keys.Size() == 0 {
-			writeJSON(w, http.StatusServiceUnavailable,
-				`{"error":{"message":"号池无可用账号，请在 auths/ 目录添加登录态文件","type":"pool_empty"}}`)
+			onError(w, http.StatusServiceUnavailable, "号池无可用账号，请在 auths/ 目录添加登录态文件")
 			return
 		}
-		writeJSON(w, http.StatusServiceUnavailable,
-			`{"error":{"message":"所有上游账号均已熔断，请稍后重试","type":"pool_all_broken"}}`)
+		onError(w, http.StatusServiceUnavailable, "所有上游账号均已熔断，请稍后重试")
 		return
 	}
 
 	status, sanitized := sanitizeUpstreamError(lastStatus)
 	if sanitized == "" {
 		status = http.StatusBadGateway
-		sanitized = `{"error":{"message":"上游服务异常，请稍后重试","type":"upstream_error"}}`
+		sanitized = "上游服务异常，请稍后重试"
 	}
-	writeJSON(w, status, sanitized)
+	onError(w, status, sanitized)
 }
 
 func (p *ProxyHandler) selectKey(tried map[int]struct{}) (string, int) {
@@ -183,6 +161,80 @@ func (p *ProxyHandler) selectKey(tried map[int]struct{}) (string, int) {
 	return "", -1
 }
 
+// --- OpenAI-compatible handler ---
+
+func (p *ProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, `{"error":{"message":"Method not allowed","type":"invalid_request_error"}}`, http.StatusMethodNotAllowed)
+		return
+	}
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, `{"error":{"message":"Failed to read request body","type":"invalid_request_error"}}`, http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+
+	var oaiReq OpenAIRequest
+	if err := json.Unmarshal(body, &oaiReq); err != nil {
+		http.Error(w, `{"error":{"message":"Invalid JSON","type":"invalid_request_error"}}`, http.StatusBadRequest)
+		return
+	}
+
+	cfg := p.reloader.Current()
+	isStream := oaiReq.Stream != nil && *oaiReq.Stream
+	jkReq := ConvertRequest(&oaiReq, cfg.Upstream.DefaultModel)
+
+	p.forwardToUpstream(w, r, jkReq, jkReq.Model, isStream,
+		handleStreamResponse, handleNonStreamResponse,
+		func(w http.ResponseWriter, status int, msg string) {
+			writeJSON(w, status, `{"error":{"message":"`+msg+`","type":"upstream_error"}}`)
+		},
+	)
+}
+
+// --- Claude (Anthropic) handler ---
+
+func (p *ProxyHandler) ServeClaudeHTTP(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		json.NewEncoder(w).Encode(NewClaudeError("invalid_request_error", "Method not allowed"))
+		return
+	}
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(NewClaudeError("invalid_request_error", "Failed to read request body"))
+		return
+	}
+	defer r.Body.Close()
+
+	var claudeReq ClaudeRequest
+	if err := json.Unmarshal(body, &claudeReq); err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(NewClaudeError("invalid_request_error", "Invalid JSON"))
+		return
+	}
+
+	cfg := p.reloader.Current()
+	isStream := claudeReq.Stream != nil && *claudeReq.Stream
+	jkReq := ConvertClaudeRequest(&claudeReq, cfg.Upstream.DefaultModel)
+
+	p.forwardToUpstream(w, r, jkReq, jkReq.Model, isStream,
+		handleClaudeStreamResponse, handleClaudeNonStreamResponse,
+		func(w http.ResponseWriter, status int, msg string) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(status)
+			json.NewEncoder(w).Encode(NewClaudeError("api_error", msg))
+		},
+	)
+}
+
 func isRetryableStatus(status int) bool {
 	switch {
 	case status == http.StatusUnauthorized,
@@ -201,14 +253,11 @@ func sanitizeUpstreamError(status int) (int, string) {
 	case status == http.StatusUnauthorized,
 		status == http.StatusPaymentRequired,
 		status == http.StatusForbidden:
-		return http.StatusServiceUnavailable,
-			`{"error":{"message":"上游账号不可用，请稍后重试","type":"upstream_unavailable"}}`
+		return http.StatusServiceUnavailable, "上游账号不可用，请稍后重试"
 	case status == http.StatusTooManyRequests:
-		return http.StatusServiceUnavailable,
-			`{"error":{"message":"上游限流，请稍后重试","type":"upstream_throttled"}}`
+		return http.StatusServiceUnavailable, "上游限流，请稍后重试"
 	case status >= 500:
-		return http.StatusBadGateway,
-			`{"error":{"message":"上游服务异常，请稍后重试","type":"upstream_error"}}`
+		return http.StatusBadGateway, "上游服务异常，请稍后重试"
 	}
 	return status, ""
 }

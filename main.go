@@ -1,7 +1,13 @@
 package main
 
-import "jiekou2api/internal/app"
+import (
+	"embed"
+	"jiekou2api/internal/app"
+)
+
+//go:embed static
+var assets embed.FS
 
 func main() {
-	app.Run()
+	app.Run(assets)
 }
