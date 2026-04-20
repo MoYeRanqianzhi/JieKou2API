@@ -6,4 +6,13 @@
 config.yaml
 auths/*.json
 server.log
+token.key
+node_modules/
+ref/
 .playwright-mcp/
+jiekou2api-linux
+Agents.md
+Claude.md
+DESIGN-claude.md
+package.json
+package-lock.json
