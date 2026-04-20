@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>JK2API — Get API Key</title>
+<title>JK2API — GitHub 众筹计划</title>
 <style>
 :root{
   --bg:#fff;--surface:#fafafa;--surface2:#fff;
@@ -26,191 +26,170 @@
 }}
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:16px;line-height:1.6;min-height:100vh;display:flex;align-items:center;justify-content:center}
-::selection{background:#c96442;color:#fff}
+::selection{background:var(--brand);color:var(--bg)}
 
 .card{
-  background:var(--surface);
-  border:1px solid var(--border);
-  border-radius:16px;
-  padding:48px 40px;
-  max-width:440px;
-  width:90%;
-  text-align:center;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;padding:48px 40px;
+  max-width:480px;width:92%;text-align:center;
   box-shadow:rgba(0,0,0,0.05) 0px 4px 24px;
 }
-h1{
-  font-family:var(--serif);
-  font-size:32px;
-  font-weight:500;
-  line-height:1.2;
-  margin-bottom:4px;
-  letter-spacing:-0.3px;
-}
-.sub{
-  color:var(--text3);
-  font-size:14px;
-  margin-bottom:28px;
-  line-height:1.5;
-}
-.desc{
-  color:var(--text3);
-  font-size:13px;
-  margin-bottom:28px;
-  line-height:1.7;
-  text-align:left;
-  background:var(--bg);
-  border:1px solid var(--border);
-  border-radius:var(--radius-sm);
-  padding:16px;
-}
-.desc strong{color:var(--text2)}
+h1{font-family:var(--serif);font-size:32px;font-weight:500;line-height:1.2;margin-bottom:4px}
+.sub{color:var(--text3);font-size:14px;margin-bottom:28px}
 
 .btn{
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-  background:var(--brand);
-  color:var(--bg);
-  border:none;
-  padding:12px 28px;
-  cursor:pointer;
-  font-size:15px;
-  font-weight:500;
-  border-radius:var(--radius);
-  transition:opacity .15s;
-  font-family:var(--sans);
+  display:inline-flex;align-items:center;gap:8px;
+  background:var(--brand);color:var(--bg);border:none;
+  padding:12px 28px;cursor:pointer;font-size:15px;font-weight:500;
+  border-radius:var(--radius);transition:opacity .15s;font-family:var(--sans);
   box-shadow:var(--brand) 0px 0px 0px 0px, var(--brand) 0px 0px 0px 1px;
 }
 .btn:hover{opacity:.88}
 .btn:active{transform:scale(.98)}
 .btn svg{width:18px;height:18px;fill:currentColor}
+.btn-sm{padding:8px 16px;font-size:13px}
 
-.result{display:none;margin-top:28px;text-align:left}
-.lbl{
-  color:var(--text3);
-  font-size:11px;
-  text-transform:uppercase;
-  letter-spacing:.5px;
-  margin-bottom:6px;
-  font-weight:500;
+/* Step: JS code display */
+.code-wrap{
+  text-align:left;margin-top:24px;
+  background:var(--bg);border:1px solid var(--border2);
+  border-radius:var(--radius-sm);padding:16px;position:relative;
 }
+.code-wrap pre{
+  font-family:var(--mono);font-size:11px;line-height:1.5;
+  white-space:pre-wrap;word-break:break-all;color:var(--text2);
+  max-height:80px;overflow:auto;
+}
+.code-wrap .copy-btn{
+  position:absolute;top:8px;right:8px;
+  padding:4px 10px;font-size:11px;cursor:pointer;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:6px;color:var(--text3);font-family:var(--sans);
+}
+.code-wrap .copy-btn:hover{color:var(--text);border-color:var(--text3)}
+
+.steps{text-align:left;margin:20px 0;color:var(--text2);font-size:13px;line-height:1.8}
+.steps b{color:var(--text)}
+
+/* Result: API Key display */
 .key-box{
-  background:var(--bg);
-  border:1px solid var(--border2);
-  padding:14px 16px;
-  font-family:var(--mono);
-  font-size:13px;
-  word-break:break-all;
-  border-radius:var(--radius-sm);
-  cursor:pointer;
-  transition:all .15s;
-  margin-bottom:16px;
-  position:relative;
+  background:var(--bg);border:1px solid var(--border2);
+  padding:14px 16px;font-family:var(--mono);font-size:13px;
+  word-break:break-all;border-radius:var(--radius-sm);
+  margin:16px 0;text-align:left;
   box-shadow:var(--bg) 0px 0px 0px 0px, var(--ring) 0px 0px 0px 1px;
 }
-.key-box:hover{box-shadow:var(--bg) 0px 0px 0px 0px, var(--ring2) 0px 0px 0px 1px}
-.key-box .hint{
-  position:absolute;
-  right:12px;top:50%;transform:translateY(-50%);
-  font-size:10px;
-  color:var(--text4);
-  font-family:var(--sans);
-  text-transform:uppercase;
-  letter-spacing:.3px;
-}
-.key-box.ok{box-shadow:var(--bg) 0px 0px 0px 0px, var(--ok) 0px 0px 0px 1px}
-.key-box.ok .hint{color:var(--ok)}
-
 .usage{
-  color:var(--text2);
-  font-size:13px;
-  line-height:1.7;
-  background:var(--bg);
-  border:1px solid var(--border);
-  border-radius:var(--radius-sm);
-  padding:14px 16px;
+  color:var(--text2);font-size:13px;line-height:1.7;text-align:left;
+  background:var(--bg);border:1px solid var(--border);
+  border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:16px;
 }
-.usage code{
-  font-family:var(--mono);
-  font-size:12px;
-  background:var(--surface2);
-  padding:2px 6px;
-  border-radius:4px;
-  border:1px solid var(--border);
-}
-.email{color:var(--text3);font-size:13px;margin-top:12px;text-align:center}
+.usage code{font-family:var(--mono);font-size:12px;background:var(--surface2);padding:2px 6px;border-radius:4px;border:1px solid var(--border)}
 
-.spin{
-  display:none;
-  margin:28px auto;
-  width:22px;height:22px;
-  border:2.5px solid var(--border2);
-  border-top-color:var(--text);
-  border-radius:50%;
-  animation:sp .7s linear infinite;
+.desc{
+  color:var(--text3);font-size:13px;margin-bottom:24px;line-height:1.7;text-align:left;
+  background:var(--bg);border:1px solid var(--border);
+  border-radius:var(--radius-sm);padding:16px;
 }
-@keyframes sp{to{transform:rotate(360deg)}}
-.status{color:var(--text3);font-size:13px;margin-top:8px;display:none}
-.error{color:var(--err);font-size:13px;margin-top:12px;display:none}
+.desc strong{color:var(--text2)}
+
+.error{color:var(--err);font-size:13px;margin-top:12px}
+.hidden{display:none}
 </style>
 </head>
 <body>
 <div class="card">
+
+<!-- Step 0: Landing -->
+<div id="step-landing">
 <h1>JK2API</h1>
 <p class="sub">GitHub 众筹计划</p>
 <div class="desc">
   登录 JieKou，贡献登录态至共享池，获取专属 API Key。<br>
   <strong>建议使用小号</strong>，避免影响主账号。
 </div>
-<button class="btn" id="login-btn" onclick="start()">
+<button class="btn" onclick="showCode()">
 <svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
 GitHub 登录
 </button>
-<div class="spin" id="spin"></div>
-<div class="status" id="status">等待授权中...</div>
-<div class="error" id="error"></div>
-<div class="result" id="result">
-<div class="lbl">您的 API Key</div>
-<div class="key-box" id="api-key" onclick="copy()"><span class="hint">点击复制</span></div>
-<div class="lbl">使用方式</div>
+</div>
+
+<!-- Step 1: Show JS code -->
+<div id="step-code" class="hidden">
+<h1>JK2API</h1>
+<p class="sub">复制以下代码</p>
+<div class="steps">
+  <b>1.</b> 点击下方「复制代码」（将自动跳转到 JieKou 登录页）<br>
+  <b>2.</b> 在 JieKou 完成 GitHub 登录<br>
+  <b>3.</b> 按 <b>F12</b> 打开控制台，粘贴代码并回车
+</div>
+<div class="code-wrap">
+  <pre id="js-code"></pre>
+  <button class="copy-btn" onclick="copyCode()">复制代码</button>
+</div>
+<div class="error hidden" id="code-error"></div>
+</div>
+
+<!-- Step 2: Show API Key result -->
+<div id="step-result" class="hidden">
+<h1>JK2API</h1>
+<p class="sub">贡献成功，感谢支持！</p>
+<div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;text-align:left;font-weight:500">您的 API Key</div>
+<div class="key-box" id="result-key"></div>
 <div class="usage">
-<code>ANTHROPIC_BASE_URL</code> → 本服务地址<br>
-<code>ANTHROPIC_API_KEY</code> → 上方 Key
+  <code>ANTHROPIC_BASE_URL</code> → 本服务地址<br>
+  <code>ANTHROPIC_API_KEY</code> → 上方 Key
 </div>
-<div class="email" id="email"></div>
+<button class="btn" onclick="copyKey()">复制 Key</button>
 </div>
+
 </div>
 <script>
-let tmr;
-function start(){
-document.getElementById('login-btn').style.display='none';
-document.getElementById('spin').style.display='block';
-document.getElementById('status').style.display='block';
-document.getElementById('error').style.display='none';
-fetch('/public/oauth/start',{method:'POST'}).then(r=>r.json()).then(d=>{
-if(!d.login_url)throw new Error('No login URL');
-const p=window.open(d.login_url,'o','width=600,height=700');
-tmr=setInterval(()=>{fetch(`/public/oauth/poll?fp=${d.fingerprint_id}&fph=${d.fingerprint_hash}&exp=${d.expires_at}`)
-.then(r=>r.json()).then(r=>{if(r.done){clearInterval(tmr);if(p)p.close();done(r);}});},3000);
-setTimeout(()=>{if(tmr){clearInterval(tmr);err('Timed out');}},600000);
-}).catch(e=>err(e.message));}
-function done(r){
-document.getElementById('spin').style.display='none';
-document.getElementById('status').style.display='none';
-document.getElementById('result').style.display='block';
-const kb=document.getElementById('api-key');
-kb.insertBefore(document.createTextNode(r.api_key),kb.firstChild);
-if(r.email)document.getElementById('email').textContent='Account: '+r.email;}
-function err(m){
-document.getElementById('spin').style.display='none';
-document.getElementById('status').style.display='none';
-document.getElementById('login-btn').style.display='inline-flex';
-const e=document.getElementById('error');e.textContent=m;e.style.display='block';}
-function copy(){
-const kb=document.getElementById('api-key');
-const t=kb.textContent.replace('点击复制','').trim();
-navigator.clipboard.writeText(t).then(()=>{kb.classList.add('ok');kb.querySelector('.hint').textContent='已复制!';
-setTimeout(()=>{kb.classList.remove('ok');kb.querySelector('.hint').textContent='点击复制';},2000);});}
+const JIEKOU_LOGIN='https://jiekou.ai/user/login';
+const GITHUB_REPO='https://github.com/MoYeRanQianZhi/JieKou2API';
+const CONTRIBUTE_URL=location.origin+'/public/contribute';
+
+// The JS snippet users paste into jiekou.ai console
+function makeSnippet(){
+  return `fetch('${CONTRIBUTE_URL}',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:document.cookie.match(/token=([^;]+)/)?.[1]||''})}).then(r=>r.json()).then(d=>{if(d.api_key){location.href='${location.origin}/login.html?key='+encodeURIComponent(d.api_key)}else{alert('Error: '+(d.error||'unknown'))}}).catch(e=>alert('Error: '+e.message))`;
+}
+
+function showCode(){
+  document.getElementById('step-landing').classList.add('hidden');
+  document.getElementById('step-code').classList.remove('hidden');
+  document.getElementById('js-code').textContent=makeSnippet();
+}
+
+function copyCode(){
+  const code=makeSnippet();
+  navigator.clipboard.writeText(code).then(()=>{
+    const btn=document.querySelector('.copy-btn');
+    btn.textContent='已复制 ✓';
+    setTimeout(()=>{window.open(JIEKOU_LOGIN,'_blank')},300);
+  }).catch(()=>{
+    document.getElementById('code-error').textContent='复制失败，请手动选中代码复制';
+    document.getElementById('code-error').classList.remove('hidden');
+  });
+}
+
+function copyKey(){
+  const key=document.getElementById('result-key').textContent;
+  navigator.clipboard.writeText(key).then(()=>{
+    setTimeout(()=>{window.location.href=GITHUB_REPO},400);
+  });
+}
+
+// Check URL params for key (redirected back from jiekou.ai after snippet execution)
+(function(){
+  const p=new URLSearchParams(location.search);
+  const key=p.get('key');
+  if(key){
+    document.getElementById('step-landing').classList.add('hidden');
+    document.getElementById('step-result').classList.remove('hidden');
+    document.getElementById('result-key').textContent=key;
+    history.replaceState(null,'',location.pathname);
+  }
+})();
 </script>
 </body>
 </html>

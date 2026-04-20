@@ -5,220 +5,78 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
-	"time"
 )
 
-type OAuthHandler struct {
-	reloader  *Reloader
-	pool      *KeyPool
-	client    *http.Client
-	pollCache sync.Map
+type PublicHandler struct {
+	reloader *Reloader
+	pool     *KeyPool
 }
 
-func NewOAuthHandler(reloader *Reloader, pool *KeyPool) *OAuthHandler {
-	return &OAuthHandler{
-		reloader: reloader,
-		pool:     pool,
-		client:   &http.Client{Timeout: 30 * time.Second},
-	}
+func NewPublicHandler(reloader *Reloader, pool *KeyPool) *PublicHandler {
+	return &PublicHandler{reloader: reloader, pool: pool}
 }
 
-func (o *OAuthHandler) Mount(mux *http.ServeMux) {
-	mux.HandleFunc("/public/oauth/start", o.handleStart)
-	mux.HandleFunc("/public/oauth/poll", o.handlePoll)
-	mux.HandleFunc("/public/github/config", o.handleGitHubConfig)
+func (p *PublicHandler) Mount(mux *http.ServeMux) {
+	mux.HandleFunc("/public/contribute", p.handleContribute)
 }
 
-func (o *OAuthHandler) handleStart(w http.ResponseWriter, r *http.Request) {
+func (p *PublicHandler) handleContribute(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
 		return
 	}
 
-	fpID := "fp_pub_" + randomHex(16)
-	cfg := o.reloader.Current()
-
-	reqBody := map[string]string{"fingerprintId": fpID}
-	bodyBytes, _ := json.Marshal(reqBody)
-
-	apiURL := strings.TrimRight(cfg.Upstream.BaseURL, "/")
-	apiURL = strings.Replace(apiURL, "://jiekou.ai", "://api-server.jiekou.ai", 1)
-
-	resp, err := o.client.Post(apiURL+"/api/auth/cli/code", "application/json", strings.NewReader(string(bodyBytes)))
-	if err != nil {
-		log.Printf("oauth start: upstream error: %v", err)
-		http.Error(w, `{"error":"failed to initiate OAuth"}`, http.StatusBadGateway)
-		return
+	var req struct {
+		Token string `json:"token"`
+		Label string `json:"label"`
 	}
-	defer resp.Body.Close()
-
-	data, _ := io.ReadAll(resp.Body)
-	if resp.StatusCode != http.StatusOK {
-		log.Printf("oauth start: upstream %d: %s", resp.StatusCode, string(data))
-		http.Error(w, `{"error":"upstream rejected OAuth request"}`, http.StatusBadGateway)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Token == "" {
+		http.Error(w, `{"error":"token is required"}`, http.StatusBadRequest)
 		return
 	}
 
-	var upstream map[string]any
-	if err := json.Unmarshal(data, &upstream); err != nil {
-		http.Error(w, `{"error":"invalid upstream response"}`, http.StatusBadGateway)
-		return
+	if req.Label == "" {
+		req.Label = "contrib-" + randomHex(4)
+	} else {
+		req.Label = sanitizeLabel(req.Label)
 	}
 
-	loginURL, _ := upstream["loginUrl"].(string)
-	fpHash, _ := upstream["fingerprintHash"].(string)
-
-	var expiresAt string
-	switch v := upstream["expiresAt"].(type) {
-	case string:
-		expiresAt = v
-	case float64:
-		expiresAt = fmt.Sprintf("%.0f", v)
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{
-		"fingerprint_id":   fpID,
-		"fingerprint_hash": fpHash,
-		"login_url":        loginURL,
-		"expires_at":       expiresAt,
-	})
-}
-
-type pollResult struct {
-	Email  string `json:"email,omitempty"`
-	APIKey string `json:"api_key,omitempty"`
-	Done   bool   `json:"done"`
-}
-
-func (o *OAuthHandler) handlePoll(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
-		return
-	}
-
-	fp := r.URL.Query().Get("fp")
-	fph := r.URL.Query().Get("fph")
-	exp := r.URL.Query().Get("exp")
-	if fp == "" || fph == "" {
-		http.Error(w, `{"error":"missing parameters"}`, http.StatusBadRequest)
-		return
-	}
-
-	if cached, ok := o.pollCache.Load(fp); ok {
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(cached)
-		return
-	}
-
-	cfg := o.reloader.Current()
-	apiURL := strings.TrimRight(cfg.Upstream.BaseURL, "/")
-	apiURL = strings.Replace(apiURL, "://jiekou.ai", "://api-server.jiekou.ai", 1)
-
-	params := url.Values{
-		"fingerprintId":   {fp},
-		"fingerprintHash": {fph},
-		"expiresAt":       {exp},
-	}
-	resp, err := o.client.Get(apiURL + "/api/auth/cli/status?" + params.Encode())
-	if err != nil {
-		log.Printf("oauth poll: upstream error: %v", err)
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(pollResult{Done: false})
-		return
-	}
-	defer resp.Body.Close()
-
-	data, _ := io.ReadAll(resp.Body)
-	var upstream map[string]any
-	if err := json.Unmarshal(data, &upstream); err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(pollResult{Done: false})
-		return
-	}
-
-	if pending, _ := upstream["pending"].(bool); pending {
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(pollResult{Done: false})
-		return
-	}
-
-	user, _ := upstream["user"].(map[string]any)
-	if user == nil {
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(pollResult{Done: false})
-		return
-	}
-
-	authToken, _ := user["authToken"].(string)
-	email, _ := user["email"].(string)
-	name, _ := user["name"].(string)
-
-	if authToken == "" {
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(pollResult{Done: false})
-		return
-	}
-
-	label := sanitizeLabel(email)
-	if label == "" || label == "unnamed" {
-		label = sanitizeLabel(name)
-	}
-	if label == "" || label == "unnamed" {
-		label = "oauth-" + randomHex(3)
-	}
-
+	cfg := p.reloader.Current()
 	dir := cfg.Auth.Dir
 	os.MkdirAll(dir, 0o755)
-	af := authFile{Token: authToken, Label: label}
+
+	af := authFile{Token: req.Token, Label: req.Label}
 	afData, _ := json.MarshalIndent(af, "", "  ")
-	path := filepath.Join(dir, label+".json")
+	path := filepath.Join(dir, req.Label+".json")
 	if err := os.WriteFile(path, afData, 0o644); err != nil {
-		log.Printf("oauth: save auth file: %v", err)
+		log.Printf("contribute: save auth file: %v", err)
+		http.Error(w, `{"error":"failed to save token"}`, http.StatusInternalServerError)
+		return
 	}
-	o.reloader.Reload("oauth-login")
+	p.reloader.Reload("contribute")
 
 	apiKey := GenerateAPIKey()
+	p.addAPIKeyToConfig(apiKey)
 
-	// Persist the generated API key into config so it survives restarts
-	o.addAPIKeyToConfig(apiKey)
+	log.Printf("contribute: saved token %s, issued key %s", req.Label, fingerprint(apiKey))
 
-	result := pollResult{
-		Email:  maskEmail(email),
-		APIKey: apiKey,
-		Done:   true,
-	}
-	o.pollCache.Store(fp, result)
-
-	go func() {
-		time.Sleep(10 * time.Minute)
-		o.pollCache.Delete(fp)
-	}()
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(result)
-}
-
-func (o *OAuthHandler) handleGitHubConfig(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{
-		"repo": "JieKou2API",
+		"api_key": apiKey,
+		"label":   req.Label,
 	})
 }
 
-func (o *OAuthHandler) addAPIKeyToConfig(apiKey string) {
-	o.reloader.mu.Lock()
-	defer o.reloader.mu.Unlock()
+func (p *PublicHandler) addAPIKeyToConfig(apiKey string) {
+	p.reloader.mu.Lock()
+	defer p.reloader.mu.Unlock()
 
-	cfg := o.reloader.current
+	cfg := p.reloader.current
 	for _, k := range cfg.Server.APIKeys {
 		if k == apiKey {
 			return
@@ -226,16 +84,13 @@ func (o *OAuthHandler) addAPIKeyToConfig(apiKey string) {
 	}
 	cfg.Server.APIKeys = append(cfg.Server.APIKeys, apiKey)
 
-	// Persist to config.yaml
-	data, err := os.ReadFile(o.reloader.configPath)
+	data, err := os.ReadFile(p.reloader.configPath)
 	if err != nil {
-		log.Printf("oauth: read config for key persist: %v", err)
+		log.Printf("contribute: read config: %v", err)
 		return
 	}
-	content := string(data)
 
-	// Find and update api_keys section
-	lines := strings.Split(content, "\n")
+	lines := strings.Split(string(data), "\n")
 	var out []string
 	replaced := false
 	for i, line := range lines {
@@ -244,7 +99,6 @@ func (o *OAuthHandler) addAPIKeyToConfig(apiKey string) {
 			for _, k := range cfg.Server.APIKeys {
 				out = append(out, fmt.Sprintf("    - \"%s\"", k))
 			}
-			// Skip old entries
 			for j := i + 1; j < len(lines); j++ {
 				trimmed := strings.TrimSpace(lines[j])
 				if strings.HasPrefix(trimmed, "- ") || trimmed == "[]" {
@@ -259,14 +113,13 @@ func (o *OAuthHandler) addAPIKeyToConfig(apiKey string) {
 		out = append(out, line)
 	}
 	if !replaced {
-		log.Printf("oauth: could not find api_keys in config, key %s only in memory", fingerprint(apiKey))
+		log.Printf("contribute: api_keys not found in config, key %s only in memory", fingerprint(apiKey))
 		return
 	}
 
-	if err := os.WriteFile(o.reloader.configPath, []byte(strings.Join(out, "\n")), 0o644); err != nil {
-		log.Printf("oauth: write config: %v", err)
+	if err := os.WriteFile(p.reloader.configPath, []byte(strings.Join(out, "\n")), 0o644); err != nil {
+		log.Printf("contribute: write config: %v", err)
 	}
-	log.Printf("oauth: persisted API key %s to config", fingerprint(apiKey))
 }
 
 func maskEmail(email string) string {

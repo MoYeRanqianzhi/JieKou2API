@@ -354,20 +354,13 @@ label{
 <!-- OAuth -->
 <div id="oauth" class="panel">
 <div class="card">
-<div class="card-hdr"><div class="card-title">OAuth 登录</div></div>
+<div class="card-hdr"><div class="card-title">众筹登录</div></div>
 <p style="color:var(--text3);font-size:13px;margin-bottom:18px;line-height:1.7">
-GitHub 登录贡献登录态至共享池，成功后自动生成 API Key。
+公开的众筹登录页面，用户通过该页面贡献登录态并获取 API Key。
 </p>
-<button class="btn btn-primary" id="oauth-btn" onclick="startOAuth()">
-<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="vertical-align:middle"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
-GitHub 登录
-</button>
-<div id="oauth-status" class="oauth-status" style="display:none"></div>
-<div id="oauth-result" style="display:none;margin-top:18px">
-<div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;font-weight:500">API Key</div>
-<div style="font-family:var(--mono);font-size:13px;background:var(--bg);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:12px 14px;cursor:pointer;word-break:break-all;box-shadow:var(--bg) 0px 0px 0px 0px, var(--ring) 0px 0px 0px 1px" id="oauth-key" onclick="copyText(this.textContent)"></div>
-<div style="font-size:12px;color:var(--text3);margin-top:8px" id="oauth-email"></div>
-</div>
+<a href="/login.html" target="_blank" class="btn btn-primary" style="text-decoration:none;display:inline-flex">
+打开众筹页面 ↗
+</a>
 </div>
 </div>
 
@@ -520,35 +513,6 @@ function generateKey(){api('/apikeys',{method:'POST',headers:{'Content-Type':'ap
 if(d.key){toast('已生成');loadKeys();}});}
 function delApiKey(k){if(!confirm('确认删除此 Key ?'))return;
 api('/apikeys?key='+encodeURIComponent(k),{method:'DELETE'}).then(()=>{loadKeys();toast('已删除');});}
-
-// OAuth
-let oauthTimer;
-function startOAuth(){
-document.getElementById('oauth-btn').style.display='none';
-document.getElementById('oauth-status').style.display='block';
-document.getElementById('oauth-status').innerHTML='<span class="spin"></span> 正在发起...';
-document.getElementById('oauth-result').style.display='none';
-fetch('/public/oauth/start',{method:'POST'}).then(r=>r.json()).then(d=>{
-if(!d.login_url){throw new Error('No login URL');}
-document.getElementById('oauth-status').innerHTML='<span class="spin"></span> 等待 GitHub 授权...';
-const popup=window.open(d.login_url,'oauth','width=600,height=700');
-oauthTimer=setInterval(()=>{
-fetch(`/public/oauth/poll?fp=${d.fingerprint_id}&fph=${d.fingerprint_hash}&exp=${d.expires_at}`)
-.then(r=>r.json()).then(p=>{if(p.done){clearInterval(oauthTimer);if(popup)popup.close();
-document.getElementById('oauth-status').style.display='none';
-document.getElementById('oauth-result').style.display='block';
-document.getElementById('oauth-key').textContent=p.api_key;
-document.getElementById('oauth-email').textContent=p.email?'Account: '+p.email:'';
-document.getElementById('oauth-btn').style.display='inline-flex';
-refresh();loadKeys();toast('登录成功，已发放 API Key');}});
-},3000);
-setTimeout(()=>{if(oauthTimer){clearInterval(oauthTimer);
-document.getElementById('oauth-status').innerHTML='已超时。<a href="#" onclick="resetOAuth()">重试</a>';
-document.getElementById('oauth-btn').style.display='inline-flex';}},600000);
-}).catch(e=>{
-document.getElementById('oauth-status').innerHTML='Error: '+e.message;
-document.getElementById('oauth-btn').style.display='inline-flex';});}
-function resetOAuth(){document.getElementById('oauth-status').style.display='none';document.getElementById('oauth-result').style.display='none';}
 
 // Visual config
 function loadVisual(){api('/config').then(r=>r.text()).then(raw=>{

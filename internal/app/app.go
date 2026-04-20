@@ -42,7 +42,7 @@ func Run(assets embed.FS) {
 	reloader := NewReloader(*configPath, cfg, pool)
 	proxy := NewProxyHandler(reloader, pool)
 	admin := NewAdminHandler(reloader, pool)
-	oauth := NewOAuthHandler(reloader, pool)
+	pub := NewPublicHandler(reloader, pool)
 
 	mux := http.NewServeMux()
 
@@ -92,7 +92,7 @@ func Run(assets embed.FS) {
 	})
 
 	// Public OAuth
-	oauth.Mount(mux)
+	pub.Mount(mux)
 
 	srv := &http.Server{
 		Addr:         cfg.Server.ListenAddr,
