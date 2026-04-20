@@ -209,17 +209,23 @@ label{
 .cfg-tab.active{background:var(--text);color:var(--bg)}
 
 /* API Keys section */
-.apikey-item{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:10px 0;
-  border-bottom:1px solid var(--border);
+.keys-list{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.key-row{display:grid;grid-template-columns:1fr auto auto auto;gap:6px;align-items:center}
+.key-row input{
+  font-family:var(--mono);font-size:12px;letter-spacing:-0.3px;
+  background:var(--bg);color:var(--text);border:1px solid var(--border2);
+  padding:8px 12px;border-radius:var(--radius-sm);width:100%;
 }
-.apikey-item:last-child{border-bottom:none}
-.apikey-val{
-  font-family:var(--mono);font-size:12px;
-  color:var(--text2);word-break:break-all;
-  flex:1;margin-right:12px;letter-spacing:-0.3px;
+.key-row input:focus{outline:none;border-color:#3898ec}
+.key-row .key-toggle,.key-row .key-del,.key-row .key-copy{
+  padding:6px 10px;border-radius:var(--radius-sm);border:none;cursor:pointer;
+  font-size:12px;transition:all .15s;font-family:var(--sans);
+  background:var(--surface);
+  box-shadow:var(--surface) 0px 0px 0px 0px, var(--ring) 0px 0px 0px 1px;
 }
+.key-row .key-toggle:hover,.key-row .key-copy:hover{box-shadow:var(--surface) 0px 0px 0px 0px, var(--ring2) 0px 0px 0px 1px}
+.key-row .key-del:hover{color:var(--err);box-shadow:var(--surface) 0px 0px 0px 0px, var(--err) 0px 0px 0px 1px}
+.keys-actions{display:flex;gap:8px}
 
 /* Login card */
 .login-wrap{display:flex;align-items:center;justify-content:center;min-height:80vh}
@@ -335,12 +341,13 @@ label{
 <!-- API Keys -->
 <div id="apikeys" class="panel">
 <div class="card">
-<div class="card-hdr"><div class="card-title">客户端 API Keys</div>
-<div class="card-actions">
-<button class="btn btn-sm btn-primary" onclick="generateKey()">生成</button>
-</div></div>
-<p style="color:var(--text3);font-size:13px;margin-bottom:14px;line-height:1.6">客户端访问所需的 Key，通过 OAuth 发放或手动生成。</p>
-<div id="apikeys-list"></div>
+<div class="card-hdr"><div class="card-title">客户端 API Keys</div></div>
+<p style="color:var(--text3);font-size:13px;margin-bottom:14px;line-height:1.6">客户端访问所需的 Key，通过 OAuth 发放或手动添加。</p>
+<div class="keys-list" id="apikeys-list"></div>
+<div class="keys-actions">
+<button class="btn btn-sm" onclick="addEmptyKey()">+ 手动添加</button>
+<button class="btn btn-sm btn-primary" onclick="generateKey()">随机生成</button>
+</div>
 </div>
 </div>
 
@@ -475,14 +482,42 @@ api('/keys',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON
 .then(r=>r.json()).then(()=>{closeModals();document.getElementById('ak-label').value='';document.getElementById('ak-token').value='';refresh();toast('已添加');});}
 
 // API Keys
-function loadKeys(){api('/apikeys').then(r=>r.json()).then(d=>{
+function mkKeyRow(val,focus){
 const el=document.getElementById('apikeys-list');
-if(!d.keys||!d.keys.length){el.innerHTML='<div class="empty">暂无 API Key，可手动生成或通过 OAuth 发放</div>';return;}
-el.innerHTML=d.keys.map(k=>`<div class="apikey-item"><div class="apikey-val">${k}</div>
-<div style="display:flex;gap:6px"><button class="btn btn-sm" onclick="copyText('${k}')">Copy</button>
-<button class="btn btn-sm btn-danger" onclick="delApiKey('${k}')">Del</button></div></div>`).join('');});}
+const inp=document.createElement('input');inp.type='password';inp.value=val||'';inp.placeholder='sk-ant-api01-…';
+inp.dataset.orig=val||'';
+const tog=document.createElement('button');tog.className='key-toggle';tog.textContent='👁';tog.title='显示/隐藏';
+tog.onclick=()=>{inp.type=inp.type==='password'?'text':'password'};
+const cp=document.createElement('button');cp.className='key-copy';cp.textContent='Copy';
+cp.onclick=()=>{const v=inp.value.trim();if(v)copyText(v)};
+const del=document.createElement('button');del.className='key-del';del.textContent='✕';del.title='删除';
+del.onclick=()=>{
+const orig=inp.dataset.orig;
+if(orig){api('/apikeys?key='+encodeURIComponent(orig),{method:'DELETE'}).then(()=>{row.remove();toast('已删除');checkEmpty();});}
+else{row.remove();checkEmpty();}};
+inp.onblur=()=>{
+const nv=inp.value.trim(),ov=inp.dataset.orig;
+if(nv&&nv!==ov){
+if(ov)api('/apikeys?key='+encodeURIComponent(ov),{method:'DELETE'});
+api('/apikeys',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:nv})}).then(r=>r.json()).then(d=>{
+if(d.key){inp.dataset.orig=d.key;inp.value=d.key;toast('已保存');}});}};
+const row=document.createElement('div');row.className='key-row';
+row.append(inp,tog,cp,del);el.appendChild(row);
+if(focus)inp.focus();
+}
+function checkEmpty(){
+const el=document.getElementById('apikeys-list');
+if(!el.querySelector('.key-row'))el.innerHTML='<div class="empty">暂无 API Key</div>';}
+function loadKeys(){api('/apikeys').then(r=>r.json()).then(d=>{
+const el=document.getElementById('apikeys-list');el.innerHTML='';
+if(!d.keys||!d.keys.length){el.innerHTML='<div class="empty">暂无 API Key</div>';return;}
+d.keys.forEach(k=>mkKeyRow(k,false));});}
+function addEmptyKey(){
+const el=document.getElementById('apikeys-list');
+const empty=el.querySelector('.empty');if(empty)empty.remove();
+mkKeyRow('',true);}
 function generateKey(){api('/apikeys',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}).then(r=>r.json()).then(d=>{
-if(d.key){toast('已生成');copyText(d.key);loadKeys();}});}
+if(d.key){toast('已生成');loadKeys();}});}
 function delApiKey(k){if(!confirm('确认删除此 Key ?'))return;
 api('/apikeys?key='+encodeURIComponent(k),{method:'DELETE'}).then(()=>{loadKeys();toast('已删除');});}
 
