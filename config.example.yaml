@@ -1,0 +1,24 @@
+# JieKou2API 配置 — 复制为 config.yaml 并按需修改
+# 文件保存后自动热加载（fsnotify + 15s 轮询兜底），无需重启。
+
+server:
+  listen: ":8080"
+  # 客户端访问 /v1/* 时接受的 Bearer Token 列表；留空表示不启用下游鉴权
+  api_keys: []
+
+upstream:
+  base_url: "https://jiekou.ai"
+  default_model: "claude-opus-4-7"
+
+auth:
+  # 存放登录态 JSON 文件的目录
+  dir: "auths"
+  watch_interval: 15s
+  breaker:
+    threshold: 3
+    cooldown: 1h
+
+limits:
+  global_rpm: 0
+  account_rpm: 0
+  client_rpm: 0
