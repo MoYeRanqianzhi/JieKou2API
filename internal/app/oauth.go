@@ -188,6 +188,9 @@ func (o *OAuthHandler) handlePoll(w http.ResponseWriter, r *http.Request) {
 
 	apiKey := GenerateAPIKey()
 
+	// Persist the generated API key into config so it survives restarts
+	o.addAPIKeyToConfig(apiKey)
+
 	result := pollResult{
 		Email:  maskEmail(email),
 		APIKey: apiKey,
@@ -209,6 +212,61 @@ func (o *OAuthHandler) handleGitHubConfig(w http.ResponseWriter, r *http.Request
 	json.NewEncoder(w).Encode(map[string]string{
 		"repo": "JieKou2API",
 	})
+}
+
+func (o *OAuthHandler) addAPIKeyToConfig(apiKey string) {
+	o.reloader.mu.Lock()
+	defer o.reloader.mu.Unlock()
+
+	cfg := o.reloader.current
+	for _, k := range cfg.Server.APIKeys {
+		if k == apiKey {
+			return
+		}
+	}
+	cfg.Server.APIKeys = append(cfg.Server.APIKeys, apiKey)
+
+	// Persist to config.yaml
+	data, err := os.ReadFile(o.reloader.configPath)
+	if err != nil {
+		log.Printf("oauth: read config for key persist: %v", err)
+		return
+	}
+	content := string(data)
+
+	// Find and update api_keys section
+	lines := strings.Split(content, "\n")
+	var out []string
+	replaced := false
+	for i, line := range lines {
+		if strings.Contains(line, "api_keys:") && !strings.Contains(line, "# auth") && i < len(lines)/2 {
+			out = append(out, "  api_keys:")
+			for _, k := range cfg.Server.APIKeys {
+				out = append(out, fmt.Sprintf("    - \"%s\"", k))
+			}
+			// Skip old entries
+			for j := i + 1; j < len(lines); j++ {
+				trimmed := strings.TrimSpace(lines[j])
+				if strings.HasPrefix(trimmed, "- ") || trimmed == "[]" {
+					continue
+				}
+				i = j - 1
+				break
+			}
+			replaced = true
+			continue
+		}
+		out = append(out, line)
+	}
+	if !replaced {
+		log.Printf("oauth: could not find api_keys in config, key %s only in memory", fingerprint(apiKey))
+		return
+	}
+
+	if err := os.WriteFile(o.reloader.configPath, []byte(strings.Join(out, "\n")), 0o644); err != nil {
+		log.Printf("oauth: write config: %v", err)
+	}
+	log.Printf("oauth: persisted API key %s to config", fingerprint(apiKey))
 }
 
 func maskEmail(email string) string {

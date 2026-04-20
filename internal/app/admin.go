@@ -55,6 +55,91 @@ func (a *AdminHandler) Mount(mux *http.ServeMux) {
 	mux.HandleFunc("/admin/api/keys", a.handleKeys)
 	mux.HandleFunc("/admin/api/keys/", a.handleKeyAction)
 	mux.HandleFunc("/admin/api/reload", a.handleReload)
+	mux.HandleFunc("/admin/api/apikeys", a.handleAPIKeys)
+}
+
+func (a *AdminHandler) handleAPIKeys(w http.ResponseWriter, r *http.Request) {
+	cfg := a.reloader.Current()
+	switch r.Method {
+	case http.MethodGet:
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]any{
+			"keys": cfg.Server.APIKeys,
+		})
+	case http.MethodDelete:
+		key := r.URL.Query().Get("key")
+		if key == "" {
+			http.Error(w, `{"error":"key is required"}`, http.StatusBadRequest)
+			return
+		}
+		a.reloader.mu.Lock()
+		newKeys := make([]string, 0)
+		for _, k := range a.reloader.current.Server.APIKeys {
+			if k != key {
+				newKeys = append(newKeys, k)
+			}
+		}
+		a.reloader.current.Server.APIKeys = newKeys
+		a.reloader.mu.Unlock()
+		a.persistAPIKeys()
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{"ok":true}`))
+	case http.MethodPost:
+		var req struct {
+			Key string `json:"key"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Key == "" {
+			// Generate a new key if none provided
+			req.Key = GenerateAPIKey()
+		}
+		a.reloader.mu.Lock()
+		a.reloader.current.Server.APIKeys = append(a.reloader.current.Server.APIKeys, req.Key)
+		a.reloader.mu.Unlock()
+		a.persistAPIKeys()
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{"key": req.Key})
+	default:
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func (a *AdminHandler) persistAPIKeys() {
+	a.reloader.mu.RLock()
+	keys := a.reloader.current.Server.APIKeys
+	configPath := a.reloader.configPath
+	a.reloader.mu.RUnlock()
+
+	data, err := os.ReadFile(configPath)
+	if err != nil {
+		log.Printf("admin: read config: %v", err)
+		return
+	}
+	lines := strings.Split(string(data), "\n")
+	var out []string
+	for i := 0; i < len(lines); i++ {
+		line := lines[i]
+		if strings.Contains(line, "api_keys:") && i < len(lines)/2 {
+			out = append(out, "  api_keys:")
+			if len(keys) == 0 {
+				out = append(out, "    []")
+			} else {
+				for _, k := range keys {
+					out = append(out, fmt.Sprintf("    - \"%s\"", k))
+				}
+			}
+			for j := i + 1; j < len(lines); j++ {
+				trimmed := strings.TrimSpace(lines[j])
+				if strings.HasPrefix(trimmed, "- ") || trimmed == "[]" {
+					continue
+				}
+				i = j - 1
+				break
+			}
+			continue
+		}
+		out = append(out, line)
+	}
+	os.WriteFile(configPath, []byte(strings.Join(out, "\n")), 0o644)
 }
 
 func (a *AdminHandler) handleStatus(w http.ResponseWriter, r *http.Request) {
